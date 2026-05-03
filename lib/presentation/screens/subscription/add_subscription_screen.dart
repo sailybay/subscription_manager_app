@@ -50,10 +50,10 @@ class _AddSubscriptionScreenState extends State<AddSubscriptionScreen> {
                     width: 80,
                     height: 80,
                     decoration: BoxDecoration(
-                      color: context.colors.primary.withOpacity(0.1),
+                      color: context.colors.primary.withValues(alpha: 0.1),
                       shape: BoxShape.circle,
                       border: Border.all(
-                          color: context.colors.primary.withOpacity(0.3),
+                          color: context.colors.primary.withValues(alpha: 0.3),
                           width: 2),
                     ),
                     child: Icon(Icons.add_photo_alternate_outlined,

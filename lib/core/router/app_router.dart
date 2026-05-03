@@ -9,6 +9,7 @@ import '../../presentation/screens/auth/login_screen.dart';
 import '../../presentation/screens/auth/register_screen.dart';
 import '../../presentation/screens/home/home_screen.dart';
 import '../../presentation/screens/subscription/add_subscription_screen.dart';
+import '../../presentation/screens/analytics/analytics_screen.dart';
 
 class AppRouter {
   AppRouter._();
@@ -47,8 +48,7 @@ class AppRouter {
       ),
       GoRoute(
         path: analyticsPath,
-        builder: (context, state) =>
-            const Scaffold(body: Center(child: Text('Analytics Screen'))),
+        builder: (context, state) => const AnalyticsScreen(),
       ),
       GoRoute(
         path: addSubscriptionPath,
