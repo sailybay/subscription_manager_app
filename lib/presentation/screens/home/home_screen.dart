@@ -1,9 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import '../../../core/router/app_router.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/extensions/context_extensions.dart';
 import '../../../core/utils/app_utils.dart';
+import '../../blocs/auth/auth_bloc.dart';
+import '../../blocs/auth/auth_event.dart';
 import '../../widgets/subscription_card.dart';
 
 class HomeScreen extends StatelessWidget {
@@ -31,11 +34,15 @@ class HomeScreen extends StatelessWidget {
                           Text('Твои подписки', style: context.headlineMedium),
                         ],
                       ),
-                      CircleAvatar(
-                        radius: 24,
-                        backgroundColor: AppTheme.surfaceColor,
-                        child: Icon(Icons.person_outline,
-                            color: context.colors.primary),
+                      InkWell(
+                        onTap: () =>
+                            context.read<AuthBloc>().add(AuthLogoutRequested()),
+                        child: CircleAvatar(
+                          radius: 24,
+                          backgroundColor: AppTheme.surfaceColor,
+                          child: Icon(Icons.logout,
+                              color: context.colors.primary, size: 20),
+                        ),
                       ),
                     ],
                   ),

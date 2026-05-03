@@ -17,7 +17,7 @@ Future<void> init() async {
   );
 
   // --- Blocs ---
-  sl.registerFactory(
+  sl.registerLazySingleton(
     () => AuthBloc(sl()),
   );
 }
