@@ -7,6 +7,7 @@ import '../../presentation/blocs/auth/auth_state.dart';
 
 import '../../presentation/screens/auth/login_screen.dart';
 import '../../presentation/screens/auth/register_screen.dart';
+import '../../presentation/screens/home/home_screen.dart';
 
 class AppRouter {
   AppRouter._();
@@ -41,8 +42,7 @@ class AppRouter {
       ),
       GoRoute(
         path: homePath,
-        builder: (context, state) =>
-            const Scaffold(body: Center(child: Text('Home Screen (Auth OK)'))),
+        builder: (context, state) => const HomeScreen(),
       ),
       GoRoute(
         path: analyticsPath,
