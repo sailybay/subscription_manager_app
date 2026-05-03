@@ -1,8 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
-// Импорты экранов будут добавлены по мере их создания
-// import '../../presentation/screens/auth/login_screen.dart';
-// import '../../presentation/screens/home/home_screen.dart';
+import '../di/service_locator.dart';
+import '../../presentation/blocs/auth/auth_bloc.dart';
+import '../../presentation/blocs/auth/auth_state.dart';
+
+import '../../presentation/screens/auth/login_screen.dart';
+import '../../presentation/screens/auth/register_screen.dart';
 
 class AppRouter {
   AppRouter._();
@@ -14,22 +18,31 @@ class AppRouter {
   static const String addSubscriptionPath = '/add-subscription';
 
   static final GoRouter router = GoRouter(
-    initialLocation: loginPath, // Начинаем с логина для теста
+    initialLocation: homePath,
+    refreshListenable: _RouterRefreshStream(sl<AuthBloc>().stream),
+    redirect: (context, state) {
+      final authState = context.read<AuthBloc>().state;
+      final bool loggedIn = authState is Authenticated;
+      final bool loggingIn = state.matchedLocation == loginPath ||
+          state.matchedLocation == registerPath;
+
+      if (!loggedIn && !loggingIn) return loginPath;
+      if (loggedIn && loggingIn) return homePath;
+      return null;
+    },
     routes: [
       GoRoute(
         path: loginPath,
-        builder: (context, state) =>
-            const Scaffold(body: Center(child: Text('Login Screen'))),
+        builder: (context, state) => const LoginScreen(),
       ),
       GoRoute(
         path: registerPath,
-        builder: (context, state) =>
-            const Scaffold(body: Center(child: Text('Register Screen'))),
+        builder: (context, state) => const RegisterScreen(),
       ),
       GoRoute(
         path: homePath,
         builder: (context, state) =>
-            const Scaffold(body: Center(child: Text('Home Screen'))),
+            const Scaffold(body: Center(child: Text('Home Screen (Auth OK)'))),
       ),
       GoRoute(
         path: analyticsPath,
@@ -43,4 +56,20 @@ class AppRouter {
       ),
     ],
   );
+}
+
+// Хелпер для прослушивания стрима Bloc в GoRouter
+class _RouterRefreshStream extends ChangeNotifier {
+  _RouterRefreshStream(Stream<dynamic> stream) {
+    notifyListeners();
+    _subscription = stream.asBroadcastStream().listen((_) => notifyListeners());
+  }
+
+  late final dynamic _subscription;
+
+  @override
+  void dispose() {
+    _subscription.cancel();
+    super.dispose();
+  }
 }
