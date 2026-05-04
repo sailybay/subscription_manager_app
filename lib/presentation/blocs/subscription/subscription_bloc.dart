@@ -16,6 +16,8 @@ class SubscriptionBloc extends Bloc<SubscriptionEvent, SubscriptionState> {
     on<SubscriptionDeleted>(_onSubscriptionDeleted);
     on<SubscriptionUpdatedInternal>(_onSubscriptionUpdatedInternal);
     on<SubscriptionErrorOccurredInternal>(_onSubscriptionErrorOccurred);
+    on<SubscriptionSearchQueryChanged>(_onSearchQueryChanged);
+    on<SubscriptionCategoryFilterChanged>(_onCategoryFilterChanged);
   }
 
   Future<void> _onSubscriptionRequested(
@@ -39,10 +41,62 @@ class SubscriptionBloc extends Bloc<SubscriptionEvent, SubscriptionState> {
     SubscriptionUpdatedInternal event,
     Emitter<SubscriptionState> emit,
   ) {
+    String currentQuery = '';
+    String? currentCategory;
+
+    if (state is SubscriptionLoaded) {
+      currentQuery = (state as SubscriptionLoaded).searchQuery;
+      currentCategory = (state as SubscriptionLoaded).selectedCategory;
+    }
+
+    final filtered =
+        _applyFilters(event.subscriptions, currentQuery, currentCategory);
+
     emit(SubscriptionLoaded(
-      subscriptions: event.subscriptions,
+      allSubscriptions: event.subscriptions,
+      filteredSubscriptions: filtered,
       totalMonthlySpend: event.totalTotal,
+      searchQuery: currentQuery,
+      selectedCategory: currentCategory,
     ));
+  }
+
+  void _onSearchQueryChanged(
+    SubscriptionSearchQueryChanged event,
+    Emitter<SubscriptionState> emit,
+  ) {
+    if (state is SubscriptionLoaded) {
+      final s = state as SubscriptionLoaded;
+      final filtered =
+          _applyFilters(s.allSubscriptions, event.query, s.selectedCategory);
+      emit(s.copyWith(
+          searchQuery: event.query, filteredSubscriptions: filtered));
+    }
+  }
+
+  void _onCategoryFilterChanged(
+    SubscriptionCategoryFilterChanged event,
+    Emitter<SubscriptionState> emit,
+  ) {
+    if (state is SubscriptionLoaded) {
+      final s = state as SubscriptionLoaded;
+      final filtered =
+          _applyFilters(s.allSubscriptions, s.searchQuery, event.category);
+      emit(s.copyWith(
+        selectedCategory: event.category,
+        clearCategory: event.category == null,
+        filteredSubscriptions: filtered,
+      ));
+    }
+  }
+
+  List<Subscription> _applyFilters(
+      List<Subscription> subs, String query, String? category) {
+    return subs.where((s) {
+      final matchesQuery = s.name.toLowerCase().contains(query.toLowerCase());
+      final matchesCategory = category == null || s.category == category;
+      return matchesQuery && matchesCategory;
+    }).toList();
   }
 
   void _onSubscriptionErrorOccurred(
@@ -58,12 +112,11 @@ class SubscriptionBloc extends Bloc<SubscriptionEvent, SubscriptionState> {
   ) async {
     try {
       final newSub = Subscription(
-        id: 0,
-        name: event.name,
-        price: event.price,
-        category: event.category,
-        nextBillingDate: event.nextBillingDate,
-      );
+          id: 0,
+          name: event.name,
+          price: event.price,
+          category: event.category,
+          nextBillingDate: event.nextBillingDate);
       await _repository.addSubscription(newSub);
     } catch (e) {
       add(const SubscriptionErrorOccurredInternal('Ошибка при добавлении'));
@@ -76,12 +129,11 @@ class SubscriptionBloc extends Bloc<SubscriptionEvent, SubscriptionState> {
   ) async {
     try {
       final updatedSub = Subscription(
-        id: event.id,
-        name: event.name,
-        price: event.price,
-        category: event.category,
-        nextBillingDate: event.nextBillingDate,
-      );
+          id: event.id,
+          name: event.name,
+          price: event.price,
+          category: event.category,
+          nextBillingDate: event.nextBillingDate);
       await _repository.updateSubscription(updatedSub);
     } catch (e) {
       add(const SubscriptionErrorOccurredInternal('Ошибка при обновлении'));

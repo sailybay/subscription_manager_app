@@ -69,3 +69,17 @@ final class SubscriptionErrorOccurredInternal extends SubscriptionEvent {
   @override
   List<Object?> get props => [message];
 }
+
+final class SubscriptionSearchQueryChanged extends SubscriptionEvent {
+  final String query;
+  const SubscriptionSearchQueryChanged(this.query);
+  @override
+  List<Object?> get props => [query];
+}
+
+final class SubscriptionCategoryFilterChanged extends SubscriptionEvent {
+  final String? category;
+  const SubscriptionCategoryFilterChanged(this.category);
+  @override
+  List<Object?> get props => [category];
+}
