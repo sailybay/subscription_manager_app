@@ -12,8 +12,9 @@ class SubscriptionBloc extends Bloc<SubscriptionEvent, SubscriptionState> {
   SubscriptionBloc(this._repository) : super(SubscriptionInitial()) {
     on<SubscriptionSubscriptionRequested>(_onSubscriptionRequested);
     on<SubscriptionAdded>(_onSubscriptionAdded);
+    on<SubscriptionUpdated>(_onSubscriptionUpdated);
     on<SubscriptionDeleted>(_onSubscriptionDeleted);
-    on<SubscriptionUpdatedInternal>(_onSubscriptionUpdated);
+    on<SubscriptionUpdatedInternal>(_onSubscriptionUpdatedInternal);
     on<SubscriptionErrorOccurredInternal>(_onSubscriptionErrorOccurred);
   }
 
@@ -34,7 +35,7 @@ class SubscriptionBloc extends Bloc<SubscriptionEvent, SubscriptionState> {
     );
   }
 
-  void _onSubscriptionUpdated(
+  void _onSubscriptionUpdatedInternal(
     SubscriptionUpdatedInternal event,
     Emitter<SubscriptionState> emit,
   ) {
@@ -66,6 +67,24 @@ class SubscriptionBloc extends Bloc<SubscriptionEvent, SubscriptionState> {
       await _repository.addSubscription(newSub);
     } catch (e) {
       add(const SubscriptionErrorOccurredInternal('Ошибка при добавлении'));
+    }
+  }
+
+  Future<void> _onSubscriptionUpdated(
+    SubscriptionUpdated event,
+    Emitter<SubscriptionState> emit,
+  ) async {
+    try {
+      final updatedSub = Subscription(
+        id: event.id,
+        name: event.name,
+        price: event.price,
+        category: event.category,
+        nextBillingDate: event.nextBillingDate,
+      );
+      await _repository.updateSubscription(updatedSub);
+    } catch (e) {
+      add(const SubscriptionErrorOccurredInternal('Ошибка при обновлении'));
     }
   }
 

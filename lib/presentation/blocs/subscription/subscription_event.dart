@@ -35,6 +35,25 @@ final class SubscriptionDeleted extends SubscriptionEvent {
   List<Object?> get props => [id];
 }
 
+final class SubscriptionUpdated extends SubscriptionEvent {
+  final int id;
+  final String name;
+  final double price;
+  final String category;
+  final DateTime nextBillingDate;
+
+  const SubscriptionUpdated({
+    required this.id,
+    required this.name,
+    required this.price,
+    required this.category,
+    required this.nextBillingDate,
+  });
+
+  @override
+  List<Object?> get props => [id, name, price, category, nextBillingDate];
+}
+
 // Приватные события для связи со стримом БД
 final class SubscriptionUpdatedInternal extends SubscriptionEvent {
   final List<Subscription> subscriptions;
