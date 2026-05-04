@@ -8,6 +8,7 @@ import '../../../core/utils/app_utils.dart';
 import '../../blocs/auth/auth_bloc.dart';
 import '../../blocs/auth/auth_event.dart';
 import '../../blocs/subscription/subscription_bloc.dart';
+import '../../blocs/subscription/subscription_event.dart';
 import '../../blocs/subscription/subscription_state.dart';
 import '../../widgets/subscription_card.dart';
 
@@ -150,12 +151,33 @@ class HomeScreen extends StatelessWidget {
                         delegate: SliverChildBuilderDelegate(
                           (context, index) {
                             final sub = subscriptions[index];
-                            return SubscriptionCard(
-                              title: sub.name,
-                              category: sub.category,
-                              price: sub.price,
-                              nextBillingDate: sub.nextBillingDate,
-                              icon: _getCategoryIcon(sub.category),
+                            return Dismissible(
+                              key: Key(sub.id.toString()),
+                              direction: DismissDirection.endToStart,
+                              background: Container(
+                                alignment: Alignment.centerRight,
+                                padding: const EdgeInsets.only(right: 20),
+                                margin: const EdgeInsets.only(bottom: 16),
+                                decoration: BoxDecoration(
+                                  color:
+                                      Colors.redAccent.withValues(alpha: 0.2),
+                                  borderRadius: BorderRadius.circular(24),
+                                ),
+                                child: const Icon(Icons.delete_outline,
+                                    color: Colors.redAccent),
+                              ),
+                              onDismissed: (direction) {
+                                context
+                                    .read<SubscriptionBloc>()
+                                    .add(SubscriptionDeleted(sub.id));
+                              },
+                              child: SubscriptionCard(
+                                title: sub.name,
+                                category: sub.category,
+                                price: sub.price,
+                                nextBillingDate: sub.nextBillingDate,
+                                icon: _getCategoryIcon(sub.category),
+                              ),
                             );
                           },
                           childCount: subscriptions.length,
