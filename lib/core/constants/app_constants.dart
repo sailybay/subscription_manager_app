@@ -14,7 +14,6 @@ class AppRoutes {
   static const String register = '/register';
   static const String home = '/home';
   static const String addSubscription = '/subscription/add';
-  static const String editSubscription = '/subscription/edit/:id';
   static const String analytics = '/analytics';
   static const String categories = '/categories';
 }
