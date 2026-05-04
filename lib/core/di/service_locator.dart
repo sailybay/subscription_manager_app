@@ -1,36 +1,29 @@
 import 'package:get_it/get_it.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import '../../data/database/app_database.dart';
-import '../../data/repositories/auth_repository_impl.dart';
 import '../../data/repositories/subscription_repository_impl.dart';
-import '../../domain/repositories/auth_repository.dart';
 import '../../domain/repositories/subscription_repository.dart';
-import '../../presentation/blocs/auth/auth_bloc.dart';
 import '../../presentation/blocs/subscription/subscription_bloc.dart';
+import '../services/notification_service.dart';
 
-final sl = GetIt.instance; // sl - service locator
+final sl = GetIt.instance;
 
-Future<void> init() async {
-  // --- External ---
-  final sharedPreferences = await SharedPreferences.getInstance();
-  sl.registerLazySingleton(() => sharedPreferences);
+Future<void> initServiceLocator() async {
+  // Database
+  sl.registerLazySingleton<AppDatabase>(() => AppDatabase());
 
-  // --- Database ---
-  sl.registerLazySingleton(() => AppDatabase());
+  // Services
+  final notificationService = NotificationService();
+  await notificationService.init();
+  sl.registerSingleton<NotificationService>(notificationService);
 
-  // --- Repositories ---
-  sl.registerLazySingleton<AuthRepository>(
-    () => AuthRepositoryImpl(sl()),
-  );
+  // Repositories
   sl.registerLazySingleton<SubscriptionRepository>(
-    () => SubscriptionRepositoryImpl(sl()),
+    () => SubscriptionRepositoryImpl(sl<AppDatabase>()),
   );
 
-  // --- Blocs ---
-  sl.registerLazySingleton(
-    () => AuthBloc(sl()),
-  );
-  sl.registerLazySingleton(
-    () => SubscriptionBloc(sl()),
+  // Blocs
+  sl.registerLazySingleton<SubscriptionBloc>(
+    () => SubscriptionBloc(
+        sl<SubscriptionRepository>(), sl<NotificationService>()),
   );
 }

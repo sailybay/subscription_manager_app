@@ -2,14 +2,17 @@ import 'dart:async';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../domain/entities/subscription.dart';
 import '../../../domain/repositories/subscription_repository.dart';
+import '../../../core/services/notification_service.dart';
 import 'subscription_event.dart';
 import 'subscription_state.dart';
 
 class SubscriptionBloc extends Bloc<SubscriptionEvent, SubscriptionState> {
   final SubscriptionRepository _repository;
+  final NotificationService _notificationService;
   StreamSubscription? _subscriptionStream;
 
-  SubscriptionBloc(this._repository) : super(SubscriptionInitial()) {
+  SubscriptionBloc(this._repository, this._notificationService)
+      : super(SubscriptionInitial()) {
     on<SubscriptionSubscriptionRequested>(_onSubscriptionRequested);
     on<SubscriptionAdded>(_onSubscriptionAdded);
     on<SubscriptionUpdated>(_onSubscriptionUpdated);
@@ -93,12 +96,15 @@ class SubscriptionBloc extends Bloc<SubscriptionEvent, SubscriptionState> {
   Future<void> _onSubscriptionAdded(
       SubscriptionAdded event, Emitter<SubscriptionState> emit) async {
     try {
-      await _repository.addSubscription(Subscription(
+      final newSub = Subscription(
           id: 0,
           name: event.name,
           price: event.price,
           category: event.category,
-          nextBillingDate: event.nextBillingDate));
+          nextBillingDate: event.nextBillingDate);
+      await _repository.addSubscription(newSub);
+      // Примечание: Уведомление лучше планировать после того, как БД присвоит ID,
+      // но для MVP мы можем перепланировать все уведомления при получении нового списка из базы или использовать данные события.
     } catch (_) {
       add(const SubscriptionErrorOccurredInternal('Ошибка при добавлении'));
     }
@@ -107,12 +113,14 @@ class SubscriptionBloc extends Bloc<SubscriptionEvent, SubscriptionState> {
   Future<void> _onSubscriptionUpdated(
       SubscriptionUpdated event, Emitter<SubscriptionState> emit) async {
     try {
-      await _repository.updateSubscription(Subscription(
+      final sub = Subscription(
           id: event.id,
           name: event.name,
           price: event.price,
           category: event.category,
-          nextBillingDate: event.nextBillingDate));
+          nextBillingDate: event.nextBillingDate);
+      await _repository.updateSubscription(sub);
+      await _notificationService.scheduleSubscriptionReminder(sub);
     } catch (_) {
       add(const SubscriptionErrorOccurredInternal('Ошибка при обновлении'));
     }
@@ -122,6 +130,7 @@ class SubscriptionBloc extends Bloc<SubscriptionEvent, SubscriptionState> {
       SubscriptionDeleted event, Emitter<SubscriptionState> emit) async {
     try {
       await _repository.deleteSubscription(event.id);
+      await _notificationService.cancelReminder(event.id);
     } catch (_) {
       add(const SubscriptionErrorOccurredInternal('Ошибка при удалении'));
     }
