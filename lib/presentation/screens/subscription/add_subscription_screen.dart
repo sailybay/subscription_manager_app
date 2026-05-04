@@ -2,23 +2,26 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/extensions/context_extensions.dart';
+import '../../../domain/entities/subscription.dart';
 import '../../blocs/subscription/subscription_bloc.dart';
 import '../../blocs/subscription/subscription_event.dart';
 import '../../widgets/common/app_button.dart';
 import '../../widgets/common/app_text_field.dart';
 
 class AddSubscriptionScreen extends StatefulWidget {
-  const AddSubscriptionScreen({super.key});
+  final Subscription? subscription;
+
+  const AddSubscriptionScreen({super.key, this.subscription});
 
   @override
   State<AddSubscriptionScreen> createState() => _AddSubscriptionScreenState();
 }
 
 class _AddSubscriptionScreenState extends State<AddSubscriptionScreen> {
-  final _nameController = TextEditingController();
-  final _priceController = TextEditingController();
-  DateTime _selectedDate = DateTime.now();
-  String _selectedCategory = 'Развлечения';
+  late final TextEditingController _nameController;
+  late final TextEditingController _priceController;
+  late DateTime _selectedDate;
+  late String _selectedCategory;
 
   final List<String> _categories = [
     'Развлечения',
@@ -30,6 +33,18 @@ class _AddSubscriptionScreenState extends State<AddSubscriptionScreen> {
   ];
 
   @override
+  void initState() {
+    super.initState();
+    // Инициализация данными, если мы в режиме редактирования
+    _nameController =
+        TextEditingController(text: widget.subscription?.name ?? '');
+    _priceController = TextEditingController(
+        text: widget.subscription?.price.toString() ?? '');
+    _selectedDate = widget.subscription?.nextBillingDate ?? DateTime.now();
+    _selectedCategory = widget.subscription?.category ?? 'Развлечения';
+  }
+
+  @override
   void dispose() {
     _nameController.dispose();
     _priceController.dispose();
@@ -38,9 +53,11 @@ class _AddSubscriptionScreenState extends State<AddSubscriptionScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final isEditing = widget.subscription != null;
+
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Новая подписка'),
+        title: Text(isEditing ? 'Редактировать' : 'Новая подписка'),
       ),
       body: Container(
         decoration: const BoxDecoration(gradient: AppTheme.backgroundGradient),
@@ -61,8 +78,12 @@ class _AddSubscriptionScreenState extends State<AddSubscriptionScreen> {
                           color: context.colors.primary.withValues(alpha: 0.3),
                           width: 2),
                     ),
-                    child: Icon(Icons.add_photo_alternate_outlined,
-                        color: context.colors.primary, size: 32),
+                    child: Icon(
+                        isEditing
+                            ? Icons.edit_note
+                            : Icons.add_photo_alternate_outlined,
+                        color: context.colors.primary,
+                        size: 32),
                   ),
                 ),
                 const SizedBox(height: 32),
@@ -139,20 +160,32 @@ class _AddSubscriptionScreenState extends State<AddSubscriptionScreen> {
                 ),
                 const SizedBox(height: 48),
                 AppButton(
-                  text: 'Добавить подписку',
+                  text: isEditing ? 'Обновить данные' : 'Добавить подписку',
                   onPressed: () {
                     final name = _nameController.text.trim();
                     final price = double.tryParse(_priceController.text) ?? 0.0;
 
                     if (name.isNotEmpty && price > 0) {
-                      context.read<SubscriptionBloc>().add(
-                            SubscriptionAdded(
-                              name: name,
-                              price: price,
-                              category: _selectedCategory,
-                              nextBillingDate: _selectedDate,
-                            ),
-                          );
+                      if (isEditing) {
+                        context.read<SubscriptionBloc>().add(
+                              SubscriptionUpdated(
+                                id: widget.subscription!.id,
+                                name: name,
+                                price: price,
+                                category: _selectedCategory,
+                                nextBillingDate: _selectedDate,
+                              ),
+                            );
+                      } else {
+                        context.read<SubscriptionBloc>().add(
+                              SubscriptionAdded(
+                                name: name,
+                                price: price,
+                                category: _selectedCategory,
+                                nextBillingDate: _selectedDate,
+                              ),
+                            );
+                      }
                       Navigator.of(context).pop();
                     } else {
                       ScaffoldMessenger.of(context).showSnackBar(
