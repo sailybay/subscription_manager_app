@@ -10,6 +10,7 @@ import '../../presentation/screens/auth/register_screen.dart';
 import '../../presentation/screens/home/home_screen.dart';
 import '../../presentation/screens/subscription/add_subscription_screen.dart';
 import '../../presentation/screens/analytics/analytics_screen.dart';
+import '../../domain/entities/subscription.dart';
 
 class AppRouter {
   AppRouter._();
@@ -52,7 +53,9 @@ class AppRouter {
       ),
       GoRoute(
         path: addSubscriptionPath,
-        builder: (context, state) => const AddSubscriptionScreen(),
+        builder: (context, state) => AddSubscriptionScreen(
+          subscription: state.extra as Subscription?,
+        ),
       ),
     ],
   );

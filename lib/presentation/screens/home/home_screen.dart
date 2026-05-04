@@ -171,12 +171,17 @@ class HomeScreen extends StatelessWidget {
                                     .read<SubscriptionBloc>()
                                     .add(SubscriptionDeleted(sub.id));
                               },
-                              child: SubscriptionCard(
-                                title: sub.name,
-                                category: sub.category,
-                                price: sub.price,
-                                nextBillingDate: sub.nextBillingDate,
-                                icon: _getCategoryIcon(sub.category),
+                              child: InkWell(
+                                onTap: () => context.push(
+                                    AppRouter.addSubscriptionPath,
+                                    extra: sub),
+                                child: SubscriptionCard(
+                                  title: sub.name,
+                                  category: sub.category,
+                                  price: sub.price,
+                                  nextBillingDate: sub.nextBillingDate,
+                                  icon: _getCategoryIcon(sub.category),
+                                ),
                               ),
                             );
                           },
