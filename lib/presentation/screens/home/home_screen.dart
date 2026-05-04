@@ -17,6 +17,15 @@ class HomeScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final categories = [
+      'Развлечения',
+      'Музыка',
+      'Видео',
+      'Работа',
+      'Здоровье',
+      'Другое'
+    ];
+
     return Scaffold(
       body: Container(
         decoration: const BoxDecoration(gradient: AppTheme.backgroundGradient),
@@ -27,14 +36,19 @@ class HomeScreen extends StatelessWidget {
                 return const Center(child: CircularProgressIndicator());
               }
 
-              final subscriptions =
-                  state is SubscriptionLoaded ? state.subscriptions : [];
+              final subscriptions = state is SubscriptionLoaded
+                  ? state.filteredSubscriptions
+                  : [];
+              final allSubscriptions =
+                  state is SubscriptionLoaded ? state.allSubscriptions : [];
               final totalSpend =
                   state is SubscriptionLoaded ? state.totalMonthlySpend : 0.0;
+              final selectedCategory =
+                  state is SubscriptionLoaded ? state.selectedCategory : null;
 
               return CustomScrollView(
                 slivers: [
-                  // Header
+                  // --- Header ---
                   SliverPadding(
                     padding: const EdgeInsets.all(24.0),
                     sliver: SliverToBoxAdapter(
@@ -65,9 +79,87 @@ class HomeScreen extends StatelessWidget {
                     ),
                   ),
 
-                  // Total Spending Card
+                  // --- Search Bar ---
                   SliverPadding(
                     padding: const EdgeInsets.symmetric(horizontal: 24.0),
+                    sliver: SliverToBoxAdapter(
+                      child: TextField(
+                        onChanged: (query) => context
+                            .read<SubscriptionBloc>()
+                            .add(SubscriptionSearchQueryChanged(query)),
+                        style: const TextStyle(color: Colors.white),
+                        decoration: InputDecoration(
+                          hintText: 'Поиск подписок...',
+                          hintStyle: const TextStyle(color: AppTheme.textHint),
+                          prefixIcon: const Icon(Icons.search,
+                              color: AppTheme.textHint),
+                          filled: true,
+                          fillColor: AppTheme.surfaceColor,
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(16),
+                            borderSide: BorderSide.none,
+                          ),
+                          contentPadding:
+                              const EdgeInsets.symmetric(vertical: 12),
+                        ),
+                      ),
+                    ),
+                  ),
+
+                  // --- Category Filters ---
+                  SliverPadding(
+                    padding: const EdgeInsets.only(top: 24),
+                    sliver: SliverToBoxAdapter(
+                      child: SizedBox(
+                        height: 40,
+                        child: ListView.separated(
+                          padding: const EdgeInsets.symmetric(horizontal: 24),
+                          scrollDirection: Axis.horizontal,
+                          itemCount: categories.length + 1,
+                          separatorBuilder: (_, __) => const SizedBox(width: 8),
+                          itemBuilder: (context, index) {
+                            if (index == 0) {
+                              final isAll = selectedCategory == null;
+                              return ChoiceChip(
+                                label: const Text('Все'),
+                                selected: isAll,
+                                onSelected: (_) => context
+                                    .read<SubscriptionBloc>()
+                                    .add(
+                                        const SubscriptionCategoryFilterChanged(
+                                            null)),
+                                backgroundColor: AppTheme.surfaceColor,
+                                selectedColor: context.colors.primary,
+                                labelStyle: TextStyle(
+                                    color: isAll
+                                        ? Colors.white
+                                        : AppTheme.textSecondary),
+                              );
+                            }
+                            final cat = categories[index - 1];
+                            final isSelected = selectedCategory == cat;
+                            return ChoiceChip(
+                              label: Text(cat),
+                              selected: isSelected,
+                              onSelected: (_) => context
+                                  .read<SubscriptionBloc>()
+                                  .add(SubscriptionCategoryFilterChanged(cat)),
+                              backgroundColor: AppTheme.surfaceColor,
+                              selectedColor: context.colors.primary,
+                              labelStyle: TextStyle(
+                                  color: isSelected
+                                      ? Colors.white
+                                      : AppTheme.textSecondary),
+                            );
+                          },
+                        ),
+                      ),
+                    ),
+                  ),
+
+                  // --- Total Spending Card ---
+                  SliverPadding(
+                    padding: const EdgeInsets.fromLTRB(24, 24, 24, 0),
                     sliver: SliverToBoxAdapter(
                       child: Container(
                         padding: const EdgeInsets.all(24),
@@ -86,7 +178,7 @@ class HomeScreen extends StatelessWidget {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            const Text('Траты в этом месяце',
+                            const Text('Всего в месяц',
                                 style: TextStyle(
                                     color: Colors.white70, fontSize: 14)),
                             const SizedBox(height: 8),
@@ -102,9 +194,9 @@ class HomeScreen extends StatelessWidget {
                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: [
                                 _buildMiniStat(
-                                    'Активных', '${subscriptions.length}'),
-                                _buildMiniStat('Ближайший',
-                                    subscriptions.isEmpty ? 'Нет' : 'Скоро'),
+                                    'Активных', '${allSubscriptions.length}'),
+                                _buildMiniStat(
+                                    'Показано', '${subscriptions.length}'),
                               ],
                             ),
                           ],
@@ -113,7 +205,7 @@ class HomeScreen extends StatelessWidget {
                     ),
                   ),
 
-                  // Subscriptions List Title
+                  // --- Subscriptions List ---
                   SliverPadding(
                     padding: const EdgeInsets.fromLTRB(24, 32, 24, 16),
                     sliver: SliverToBoxAdapter(
@@ -133,14 +225,18 @@ class HomeScreen extends StatelessWidget {
                     ),
                   ),
 
-                  // List of Subscriptions
                   if (subscriptions.isEmpty)
-                    const SliverToBoxAdapter(
+                    SliverToBoxAdapter(
                       child: Center(
                         child: Padding(
-                          padding: EdgeInsets.only(top: 40),
-                          child: Text('У вас пока нет подписок',
-                              style: TextStyle(color: AppTheme.textSecondary)),
+                          padding: const EdgeInsets.only(top: 40),
+                          child: Text(
+                              state is SubscriptionLoaded &&
+                                      state.searchQuery.isNotEmpty
+                                  ? 'Ничего не найдено'
+                                  : 'У вас пока нет подписок',
+                              style: const TextStyle(
+                                  color: AppTheme.textSecondary)),
                         ),
                       ),
                     )
@@ -166,7 +262,7 @@ class HomeScreen extends StatelessWidget {
                                 child: const Icon(Icons.delete_outline,
                                     color: Colors.redAccent),
                               ),
-                              onDismissed: (direction) {
+                              onDismissed: (_) {
                                 context
                                     .read<SubscriptionBloc>()
                                     .add(SubscriptionDeleted(sub.id));

@@ -26,8 +26,9 @@ class AnalyticsScreen extends StatelessWidget {
                 return const Center(child: CircularProgressIndicator());
               }
 
+              // Используем allSubscriptions для аналитики, чтобы видеть всю картину
               final subscriptions = state is SubscriptionLoaded
-                  ? state.subscriptions
+                  ? state.allSubscriptions
                   : <Subscription>[];
 
               if (subscriptions.isEmpty) {
@@ -53,7 +54,7 @@ class AnalyticsScreen extends StatelessWidget {
                     Text('Траты по категориям', style: context.titleMedium),
                     const SizedBox(height: 24),
 
-                    // Живой График
+                    // График
                     SizedBox(
                       height: 200,
                       child: PieChart(
@@ -96,7 +97,6 @@ class AnalyticsScreen extends StatelessWidget {
                     Text('Детализация', style: context.titleMedium),
                     const SizedBox(height: 16),
 
-                    // Список реальных категорий
                     ...categoryData.entries.map((entry) => _buildCategoryItem(
                         context,
                         entry.key,
@@ -112,7 +112,6 @@ class AnalyticsScreen extends StatelessWidget {
     );
   }
 
-  // Вспомогательная функция для группировки
   Map<String, double> _calculateCategoryData(List<Subscription> subs) {
     final Map<String, double> data = {};
     for (var sub in subs) {
