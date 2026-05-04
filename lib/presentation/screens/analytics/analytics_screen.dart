@@ -1,8 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:fl_chart/fl_chart.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/extensions/context_extensions.dart';
 import '../../../core/utils/app_utils.dart';
+import '../../blocs/subscription/subscription_bloc.dart';
+import '../../blocs/subscription/subscription_state.dart';
+import '../../../domain/entities/subscription.dart';
 
 class AnalyticsScreen extends StatelessWidget {
   const AnalyticsScreen({super.key});
@@ -12,95 +16,126 @@ class AnalyticsScreen extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Аналитика'),
-        leading: const BackButton(color: AppTheme.textPrimary),
       ),
       body: Container(
         decoration: const BoxDecoration(gradient: AppTheme.backgroundGradient),
         child: SafeArea(
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.all(24.0),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text('Траты по категориям', style: context.titleMedium),
-                const SizedBox(height: 24),
+          child: BlocBuilder<SubscriptionBloc, SubscriptionState>(
+            builder: (context, state) {
+              if (state is SubscriptionLoading) {
+                return const Center(child: CircularProgressIndicator());
+              }
 
-                // График
-                SizedBox(
-                  height: 200,
-                  child: PieChart(
-                    PieChartData(
-                      sectionsSpace: 0,
-                      centerSpaceRadius: 40,
-                      sections: [
-                        PieChartSectionData(
-                          color: context.colors.primary,
-                          value: 40,
-                          title: '40%',
-                          radius: 50,
-                          titleStyle: const TextStyle(
-                              color: Colors.white, fontWeight: FontWeight.bold),
+              final subscriptions = state is SubscriptionLoaded
+                  ? state.subscriptions
+                  : <Subscription>[];
+
+              if (subscriptions.isEmpty) {
+                return const Center(
+                  child: Text('Добавьте подписки для анализа',
+                      style: TextStyle(color: AppTheme.textSecondary)),
+                );
+              }
+
+              // --- Логика расчетов ---
+              final categoryData = _calculateCategoryData(subscriptions);
+              final maxPriceSub =
+                  subscriptions.reduce((a, b) => a.price > b.price ? a : b);
+              final avgPrice = state is SubscriptionLoaded
+                  ? (state.totalMonthlySpend / subscriptions.length)
+                  : 0.0;
+
+              return SingleChildScrollView(
+                padding: const EdgeInsets.all(24.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text('Траты по категориям', style: context.titleMedium),
+                    const SizedBox(height: 24),
+
+                    // Живой График
+                    SizedBox(
+                      height: 200,
+                      child: PieChart(
+                        PieChartData(
+                          sectionsSpace: 2,
+                          centerSpaceRadius: 40,
+                          sections: categoryData.entries.map((entry) {
+                            return PieChartSectionData(
+                              color: _getCategoryColor(entry.key),
+                              value: entry.value,
+                              title: '${entry.value.toStringAsFixed(0)}₽',
+                              radius: 50,
+                              titleStyle: const TextStyle(
+                                color: Colors.white,
+                                fontWeight: FontWeight.bold,
+                                fontSize: 12,
+                              ),
+                            );
+                          }).toList(),
                         ),
-                        PieChartSectionData(
-                          color: context.colors.secondary,
-                          value: 30,
-                          title: '30%',
-                          radius: 50,
-                          titleStyle: const TextStyle(
-                              color: Colors.white, fontWeight: FontWeight.bold),
-                        ),
-                        PieChartSectionData(
-                          color: Colors.purpleAccent,
-                          value: 15,
-                          title: '15%',
-                          radius: 50,
-                          titleStyle: const TextStyle(
-                              color: Colors.white, fontWeight: FontWeight.bold),
-                        ),
-                        PieChartSectionData(
-                          color: Colors.orangeAccent,
-                          value: 15,
-                          title: '15%',
-                          radius: 50,
-                          titleStyle: const TextStyle(
-                              color: Colors.white, fontWeight: FontWeight.bold),
-                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 48),
+
+                    // Реальная Статистика
+                    Row(
+                      children: [
+                        _buildStatCard(
+                            context,
+                            'Макс. цена',
+                            AppUtils.formatCurrency(maxPriceSub.price),
+                            Icons.trending_up),
+                        const SizedBox(width: 16),
+                        _buildStatCard(context, 'В среднем',
+                            AppUtils.formatCurrency(avgPrice), Icons.bar_chart),
                       ],
                     ),
-                  ),
-                ),
-                const SizedBox(height: 48),
+                    const SizedBox(height: 32),
 
-                // Статистика в карточках
-                Row(
-                  children: [
-                    _buildStatCard(
-                        context, 'Макс. цена', '2 400 ₽', Icons.trending_up),
-                    const SizedBox(width: 16),
-                    _buildStatCard(
-                        context, 'В среднем', '830 ₽', Icons.bar_chart),
+                    Text('Детализация', style: context.titleMedium),
+                    const SizedBox(height: 16),
+
+                    // Список реальных категорий
+                    ...categoryData.entries.map((entry) => _buildCategoryItem(
+                        context,
+                        entry.key,
+                        entry.value,
+                        _getCategoryColor(entry.key))),
                   ],
                 ),
-                const SizedBox(height: 32),
-
-                Text('Детализация', style: context.titleMedium),
-                const SizedBox(height: 16),
-
-                // Список категорий
-                _buildCategoryItem(
-                    context, 'Развлечения', 4500, context.colors.primary),
-                _buildCategoryItem(
-                    context, 'Музыка', 1200, context.colors.secondary),
-                _buildCategoryItem(
-                    context, 'Работа', 3200, Colors.purpleAccent),
-                _buildCategoryItem(
-                    context, 'Здоровье', 800, Colors.orangeAccent),
-              ],
-            ),
+              );
+            },
           ),
         ),
       ),
     );
+  }
+
+  // Вспомогательная функция для группировки
+  Map<String, double> _calculateCategoryData(List<Subscription> subs) {
+    final Map<String, double> data = {};
+    for (var sub in subs) {
+      data[sub.category] = (data[sub.category] ?? 0) + sub.price;
+    }
+    return data;
+  }
+
+  Color _getCategoryColor(String category) {
+    switch (category) {
+      case 'Развлечения':
+        return Colors.blueAccent;
+      case 'Музыка':
+        return Colors.greenAccent;
+      case 'Видео':
+        return Colors.redAccent;
+      case 'Работа':
+        return Colors.purpleAccent;
+      case 'Здоровье':
+        return Colors.orangeAccent;
+      default:
+        return Colors.grey;
+    }
   }
 
   Widget _buildStatCard(
@@ -115,13 +150,13 @@ class AnalyticsScreen extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Icon(icon, color: context.colors.primary, size: 20),
+            Icon(icon, color: AppTheme.primaryColor, size: 20),
             const SizedBox(height: 12),
             Text(title, style: context.bodyMedium?.copyWith(fontSize: 12)),
             const SizedBox(height: 4),
             Text(value,
-                style:
-                    context.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
+                style: context.titleMedium
+                    ?.copyWith(fontWeight: FontWeight.bold, fontSize: 14)),
           ],
         ),
       ),
