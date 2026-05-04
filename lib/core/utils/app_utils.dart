@@ -40,8 +40,10 @@ class AppUtils {
   /// Универсальный SnackBar
   static void showSnackBar(BuildContext context, String message,
       {bool isError = false}) {
-    if (!context.mounted)
-      return; // Проверка на "живой" контекст (предотвращает баги)
+    if (!context.mounted) {
+      return;
+    }
+    // Проверка на "живой" контекст (предотвращает баги)
 
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
