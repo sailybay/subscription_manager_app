@@ -14,9 +14,7 @@ class AnalyticsScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Аналитика'),
-      ),
+      appBar: AppBar(title: const Text('Аналитика')),
       body: Container(
         decoration: const BoxDecoration(gradient: AppTheme.backgroundGradient),
         child: SafeArea(
@@ -26,52 +24,108 @@ class AnalyticsScreen extends StatelessWidget {
                 return const Center(child: CircularProgressIndicator());
               }
 
-              // Используем allSubscriptions для аналитики, чтобы видеть всю картину
               final subscriptions = state is SubscriptionLoaded
                   ? state.allSubscriptions
                   : <Subscription>[];
-
               if (subscriptions.isEmpty) {
                 return const Center(
-                  child: Text('Добавьте подписки для анализа',
-                      style: TextStyle(color: AppTheme.textSecondary)),
-                );
+                    child: Text('Добавьте подписки для анализа',
+                        style: TextStyle(color: AppTheme.textSecondary)));
               }
 
-              // --- Логика расчетов ---
+              final totalMonthly =
+                  state is SubscriptionLoaded ? state.totalMonthlySpend : 0.0;
+              final totalYearly = totalMonthly * 12;
+              final totalWeekly =
+                  totalMonthly / 4.345; // Среднее кол-во недель в месяце
+
               final categoryData = _calculateCategoryData(subscriptions);
-              final maxPriceSub =
-                  subscriptions.reduce((a, b) => a.price > b.price ? a : b);
-              final avgPrice = state is SubscriptionLoaded
-                  ? (state.totalMonthlySpend / subscriptions.length)
-                  : 0.0;
+              final maxCategory = categoryData.entries
+                  .reduce((a, b) => a.value > b.value ? a : b)
+                  .key;
 
               return SingleChildScrollView(
                 padding: const EdgeInsets.all(24.0),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
+                    // --- Блок прогнозов (Новый) ---
+                    Container(
+                      padding: const EdgeInsets.all(24),
+                      decoration: BoxDecoration(
+                        gradient: AppTheme.primaryGradient,
+                        borderRadius: BorderRadius.circular(32),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text('Прогноз расходов',
+                              style: TextStyle(
+                                  color: Colors.white70, fontSize: 14)),
+                          const SizedBox(height: 16),
+                          _buildForecastRow(
+                              'В неделю', AppUtils.formatCurrency(totalWeekly)),
+                          const Divider(color: Colors.white24, height: 24),
+                          _buildForecastRow(
+                              'В месяц', AppUtils.formatCurrency(totalMonthly)),
+                          const Divider(color: Colors.white24, height: 24),
+                          _buildForecastRow(
+                              'В год', AppUtils.formatCurrency(totalYearly),
+                              isBold: true),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 32),
+
+                    // --- Секция "Умные советы" ---
+                    Text('Инсайты', style: context.titleMedium),
+                    const SizedBox(height: 12),
+                    Container(
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: Colors.orangeAccent.withValues(alpha: 0.1),
+                        borderRadius: BorderRadius.circular(20),
+                        border: Border.all(
+                            color: Colors.orangeAccent.withValues(alpha: 0.3)),
+                      ),
+                      child: Row(
+                        children: [
+                          const Icon(Icons.lightbulb_outline,
+                              color: Colors.orangeAccent),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Text(
+                              'Ваша самая затратная категория — "$maxCategory". Подумайте, все ли эти подписки вам полезны.',
+                              style: context.bodyMedium?.copyWith(
+                                  fontSize: 13, color: Colors.orangeAccent),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 32),
+
                     Text('Траты по категориям', style: context.titleMedium),
                     const SizedBox(height: 24),
 
                     // График
                     SizedBox(
-                      height: 200,
+                      height: 180,
                       child: PieChart(
                         PieChartData(
                           sectionsSpace: 2,
-                          centerSpaceRadius: 40,
+                          centerSpaceRadius: 35,
                           sections: categoryData.entries.map((entry) {
                             return PieChartSectionData(
                               color: _getCategoryColor(entry.key),
                               value: entry.value,
-                              title: '${entry.value.toStringAsFixed(0)}₽',
-                              radius: 50,
+                              title:
+                                  '${((entry.value / totalMonthly) * 100).toStringAsFixed(0)}%',
+                              radius: 45,
                               titleStyle: const TextStyle(
-                                color: Colors.white,
-                                fontWeight: FontWeight.bold,
-                                fontSize: 12,
-                              ),
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 11),
                             );
                           }).toList(),
                         ),
@@ -79,24 +133,8 @@ class AnalyticsScreen extends StatelessWidget {
                     ),
                     const SizedBox(height: 48),
 
-                    // Реальная Статистика
-                    Row(
-                      children: [
-                        _buildStatCard(
-                            context,
-                            'Макс. цена',
-                            AppUtils.formatCurrency(maxPriceSub.price),
-                            Icons.trending_up),
-                        const SizedBox(width: 16),
-                        _buildStatCard(context, 'В среднем',
-                            AppUtils.formatCurrency(avgPrice), Icons.bar_chart),
-                      ],
-                    ),
-                    const SizedBox(height: 32),
-
                     Text('Детализация', style: context.titleMedium),
                     const SizedBox(height: 16),
-
                     ...categoryData.entries.map((entry) => _buildCategoryItem(
                         context,
                         entry.key,
@@ -109,6 +147,24 @@ class AnalyticsScreen extends StatelessWidget {
           ),
         ),
       ),
+    );
+  }
+
+  Widget _buildForecastRow(String label, String value, {bool isBold = false}) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        Text(label,
+            style: const TextStyle(color: Colors.white70, fontSize: 13)),
+        Text(
+          value,
+          style: TextStyle(
+            color: Colors.white,
+            fontSize: isBold ? 20 : 16,
+            fontWeight: isBold ? FontWeight.bold : FontWeight.normal,
+          ),
+        ),
+      ],
     );
   }
 
@@ -137,55 +193,26 @@ class AnalyticsScreen extends StatelessWidget {
     }
   }
 
-  Widget _buildStatCard(
-      BuildContext context, String title, String value, IconData icon) {
-    return Expanded(
-      child: Container(
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: AppTheme.cardColor,
-          borderRadius: BorderRadius.circular(20),
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Icon(icon, color: AppTheme.primaryColor, size: 20),
-            const SizedBox(height: 12),
-            Text(title, style: context.bodyMedium?.copyWith(fontSize: 12)),
-            const SizedBox(height: 4),
-            Text(value,
-                style: context.titleMedium
-                    ?.copyWith(fontWeight: FontWeight.bold, fontSize: 14)),
-          ],
-        ),
-      ),
-    );
-  }
-
   Widget _buildCategoryItem(
       BuildContext context, String name, double amount, Color color) {
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: AppTheme.cardColor.withValues(alpha: 0.5),
-        borderRadius: BorderRadius.circular(16),
-      ),
+          color: AppTheme.cardColor.withValues(alpha: 0.5),
+          borderRadius: BorderRadius.circular(16)),
       child: Row(
         children: [
           Container(
-            width: 12,
-            height: 12,
-            decoration: BoxDecoration(color: color, shape: BoxShape.circle),
-          ),
+              width: 12,
+              height: 12,
+              decoration: BoxDecoration(color: color, shape: BoxShape.circle)),
           const SizedBox(width: 12),
           Text(name, style: context.bodyMedium),
           const Spacer(),
-          Text(
-            AppUtils.formatCurrency(amount),
-            style: const TextStyle(
-                fontWeight: FontWeight.bold, color: AppTheme.textPrimary),
-          ),
+          Text(AppUtils.formatCurrency(amount),
+              style: const TextStyle(
+                  fontWeight: FontWeight.bold, color: AppTheme.textPrimary)),
         ],
       ),
     );
