@@ -4,7 +4,7 @@ part of 'app_database.dart';
 
 // ignore_for_file: type=lint
 class $SubscriptionsTable extends Subscriptions
-    with TableInfo<$SubscriptionsTable, Subscription> {
+    with TableInfo<$SubscriptionsTable, SubscriptionTableData> {
   @override
   final GeneratedDatabase attachedDatabase;
   final String? _alias;
@@ -60,7 +60,8 @@ class $SubscriptionsTable extends Subscriptions
   String get actualTableName => $name;
   static const String $name = 'subscriptions';
   @override
-  VerificationContext validateIntegrity(Insertable<Subscription> instance,
+  VerificationContext validateIntegrity(
+      Insertable<SubscriptionTableData> instance,
       {bool isInserting = false}) {
     final context = VerificationContext();
     final data = instance.toColumns(true);
@@ -103,9 +104,9 @@ class $SubscriptionsTable extends Subscriptions
   @override
   Set<GeneratedColumn> get $primaryKey => {id};
   @override
-  Subscription map(Map<String, dynamic> data, {String? tablePrefix}) {
+  SubscriptionTableData map(Map<String, dynamic> data, {String? tablePrefix}) {
     final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
-    return Subscription(
+    return SubscriptionTableData(
       id: attachedDatabase.typeMapping
           .read(DriftSqlType.int, data['${effectivePrefix}id'])!,
       name: attachedDatabase.typeMapping
@@ -127,14 +128,15 @@ class $SubscriptionsTable extends Subscriptions
   }
 }
 
-class Subscription extends DataClass implements Insertable<Subscription> {
+class SubscriptionTableData extends DataClass
+    implements Insertable<SubscriptionTableData> {
   final int id;
   final String name;
   final double price;
   final String category;
   final DateTime nextBillingDate;
   final DateTime createdAt;
-  const Subscription(
+  const SubscriptionTableData(
       {required this.id,
       required this.name,
       required this.price,
@@ -164,10 +166,10 @@ class Subscription extends DataClass implements Insertable<Subscription> {
     );
   }
 
-  factory Subscription.fromJson(Map<String, dynamic> json,
+  factory SubscriptionTableData.fromJson(Map<String, dynamic> json,
       {ValueSerializer? serializer}) {
     serializer ??= driftRuntimeOptions.defaultSerializer;
-    return Subscription(
+    return SubscriptionTableData(
       id: serializer.fromJson<int>(json['id']),
       name: serializer.fromJson<String>(json['name']),
       price: serializer.fromJson<double>(json['price']),
@@ -189,14 +191,14 @@ class Subscription extends DataClass implements Insertable<Subscription> {
     };
   }
 
-  Subscription copyWith(
+  SubscriptionTableData copyWith(
           {int? id,
           String? name,
           double? price,
           String? category,
           DateTime? nextBillingDate,
           DateTime? createdAt}) =>
-      Subscription(
+      SubscriptionTableData(
         id: id ?? this.id,
         name: name ?? this.name,
         price: price ?? this.price,
@@ -204,8 +206,8 @@ class Subscription extends DataClass implements Insertable<Subscription> {
         nextBillingDate: nextBillingDate ?? this.nextBillingDate,
         createdAt: createdAt ?? this.createdAt,
       );
-  Subscription copyWithCompanion(SubscriptionsCompanion data) {
-    return Subscription(
+  SubscriptionTableData copyWithCompanion(SubscriptionsCompanion data) {
+    return SubscriptionTableData(
       id: data.id.present ? data.id.value : this.id,
       name: data.name.present ? data.name.value : this.name,
       price: data.price.present ? data.price.value : this.price,
@@ -219,7 +221,7 @@ class Subscription extends DataClass implements Insertable<Subscription> {
 
   @override
   String toString() {
-    return (StringBuffer('Subscription(')
+    return (StringBuffer('SubscriptionTableData(')
           ..write('id: $id, ')
           ..write('name: $name, ')
           ..write('price: $price, ')
@@ -236,7 +238,7 @@ class Subscription extends DataClass implements Insertable<Subscription> {
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
-      (other is Subscription &&
+      (other is SubscriptionTableData &&
           other.id == this.id &&
           other.name == this.name &&
           other.price == this.price &&
@@ -245,7 +247,7 @@ class Subscription extends DataClass implements Insertable<Subscription> {
           other.createdAt == this.createdAt);
 }
 
-class SubscriptionsCompanion extends UpdateCompanion<Subscription> {
+class SubscriptionsCompanion extends UpdateCompanion<SubscriptionTableData> {
   final Value<int> id;
   final Value<String> name;
   final Value<double> price;
@@ -271,7 +273,7 @@ class SubscriptionsCompanion extends UpdateCompanion<Subscription> {
         price = Value(price),
         category = Value(category),
         nextBillingDate = Value(nextBillingDate);
-  static Insertable<Subscription> custom({
+  static Insertable<SubscriptionTableData> custom({
     Expression<int>? id,
     Expression<String>? name,
     Expression<double>? price,
@@ -463,17 +465,17 @@ class $$SubscriptionsTableAnnotationComposer
 class $$SubscriptionsTableTableManager extends RootTableManager<
     _$AppDatabase,
     $SubscriptionsTable,
-    Subscription,
+    SubscriptionTableData,
     $$SubscriptionsTableFilterComposer,
     $$SubscriptionsTableOrderingComposer,
     $$SubscriptionsTableAnnotationComposer,
     $$SubscriptionsTableCreateCompanionBuilder,
     $$SubscriptionsTableUpdateCompanionBuilder,
     (
-      Subscription,
-      BaseReferences<_$AppDatabase, $SubscriptionsTable, Subscription>
+      SubscriptionTableData,
+      BaseReferences<_$AppDatabase, $SubscriptionsTable, SubscriptionTableData>
     ),
-    Subscription,
+    SubscriptionTableData,
     PrefetchHooks Function()> {
   $$SubscriptionsTableTableManager(_$AppDatabase db, $SubscriptionsTable table)
       : super(TableManagerState(
@@ -527,17 +529,17 @@ class $$SubscriptionsTableTableManager extends RootTableManager<
 typedef $$SubscriptionsTableProcessedTableManager = ProcessedTableManager<
     _$AppDatabase,
     $SubscriptionsTable,
-    Subscription,
+    SubscriptionTableData,
     $$SubscriptionsTableFilterComposer,
     $$SubscriptionsTableOrderingComposer,
     $$SubscriptionsTableAnnotationComposer,
     $$SubscriptionsTableCreateCompanionBuilder,
     $$SubscriptionsTableUpdateCompanionBuilder,
     (
-      Subscription,
-      BaseReferences<_$AppDatabase, $SubscriptionsTable, Subscription>
+      SubscriptionTableData,
+      BaseReferences<_$AppDatabase, $SubscriptionsTable, SubscriptionTableData>
     ),
-    Subscription,
+    SubscriptionTableData,
     PrefetchHooks Function()>;
 
 class $AppDatabaseManager {

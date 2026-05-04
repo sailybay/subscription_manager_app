@@ -7,6 +7,8 @@ import '../../../core/extensions/context_extensions.dart';
 import '../../../core/utils/app_utils.dart';
 import '../../blocs/auth/auth_bloc.dart';
 import '../../blocs/auth/auth_event.dart';
+import '../../blocs/subscription/subscription_bloc.dart';
+import '../../blocs/subscription/subscription_state.dart';
 import '../../widgets/subscription_card.dart';
 
 class HomeScreen extends StatelessWidget {
@@ -18,136 +20,153 @@ class HomeScreen extends StatelessWidget {
       body: Container(
         decoration: const BoxDecoration(gradient: AppTheme.backgroundGradient),
         child: SafeArea(
-          child: CustomScrollView(
-            slivers: [
-              // Header
-              SliverPadding(
-                padding: const EdgeInsets.all(24.0),
-                sliver: SliverToBoxAdapter(
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
+          child: BlocBuilder<SubscriptionBloc, SubscriptionState>(
+            builder: (context, state) {
+              if (state is SubscriptionLoading) {
+                return const Center(child: CircularProgressIndicator());
+              }
+
+              final subscriptions =
+                  state is SubscriptionLoaded ? state.subscriptions : [];
+              final totalSpend =
+                  state is SubscriptionLoaded ? state.totalMonthlySpend : 0.0;
+
+              return CustomScrollView(
+                slivers: [
+                  // Header
+                  SliverPadding(
+                    padding: const EdgeInsets.all(24.0),
+                    sliver: SliverToBoxAdapter(
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          Text('Привет, 👋', style: context.bodyMedium),
-                          Text('Твои подписки', style: context.headlineMedium),
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text('Привет, 👋', style: context.bodyMedium),
+                              Text('Твои подписки',
+                                  style: context.headlineMedium),
+                            ],
+                          ),
+                          InkWell(
+                            onTap: () => context
+                                .read<AuthBloc>()
+                                .add(AuthLogoutRequested()),
+                            child: CircleAvatar(
+                              radius: 24,
+                              backgroundColor: AppTheme.surfaceColor,
+                              child: Icon(Icons.logout,
+                                  color: context.colors.primary, size: 20),
+                            ),
+                          ),
                         ],
                       ),
-                      InkWell(
-                        onTap: () =>
-                            context.read<AuthBloc>().add(AuthLogoutRequested()),
-                        child: CircleAvatar(
-                          radius: 24,
-                          backgroundColor: AppTheme.surfaceColor,
-                          child: Icon(Icons.logout,
-                              color: context.colors.primary, size: 20),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-
-              // Total Spending Card
-              SliverPadding(
-                padding: const EdgeInsets.symmetric(horizontal: 24.0),
-                sliver: SliverToBoxAdapter(
-                  child: Container(
-                    padding: const EdgeInsets.all(24),
-                    decoration: BoxDecoration(
-                      gradient: AppTheme.primaryGradient,
-                      borderRadius: BorderRadius.circular(32),
-                      boxShadow: [
-                        BoxShadow(
-                          color: AppTheme.primaryColor.withValues(alpha: 0.3),
-                          blurRadius: 20,
-                          offset: const Offset(0, 10),
-                        ),
-                      ],
                     ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const Text('Траты в этом месяце',
-                            style:
-                                TextStyle(color: Colors.white70, fontSize: 14)),
-                        const SizedBox(height: 8),
-                        Text(
-                          AppUtils.formatCurrency(12450),
-                          style: const TextStyle(
-                              color: Colors.white,
-                              fontSize: 32,
-                              fontWeight: FontWeight.bold),
-                        ),
-                        const SizedBox(height: 24),
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            _buildMiniStat('Активных', '12'),
-                            _buildMiniStat('Ближайший', 'Завтра'),
+                  ),
+
+                  // Total Spending Card
+                  SliverPadding(
+                    padding: const EdgeInsets.symmetric(horizontal: 24.0),
+                    sliver: SliverToBoxAdapter(
+                      child: Container(
+                        padding: const EdgeInsets.all(24),
+                        decoration: BoxDecoration(
+                          gradient: AppTheme.primaryGradient,
+                          borderRadius: BorderRadius.circular(32),
+                          boxShadow: [
+                            BoxShadow(
+                              color:
+                                  AppTheme.primaryColor.withValues(alpha: 0.3),
+                              blurRadius: 20,
+                              offset: const Offset(0, 10),
+                            ),
                           ],
                         ),
-                      ],
-                    ),
-                  ),
-                ),
-              ),
-
-              // Subscriptions List Title
-              SliverPadding(
-                padding: const EdgeInsets.fromLTRB(24, 32, 24, 16),
-                sliver: SliverToBoxAdapter(
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text('Предстоящие платежи',
-                          style: context.titleMedium
-                              ?.copyWith(fontWeight: FontWeight.bold)),
-                      TextButton(
-                        onPressed: () => context.push(AppRouter.analyticsPath),
-                        child: const Text('Все'),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Text('Траты в этом месяце',
+                                style: TextStyle(
+                                    color: Colors.white70, fontSize: 14)),
+                            const SizedBox(height: 8),
+                            Text(
+                              AppUtils.formatCurrency(totalSpend),
+                              style: const TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 32,
+                                  fontWeight: FontWeight.bold),
+                            ),
+                            const SizedBox(height: 24),
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                _buildMiniStat(
+                                    'Активных', '${subscriptions.length}'),
+                                _buildMiniStat('Ближайший',
+                                    subscriptions.isEmpty ? 'Нет' : 'Скоро'),
+                              ],
+                            ),
+                          ],
+                        ),
                       ),
-                    ],
+                    ),
                   ),
-                ),
-              ),
 
-              // List of Subscriptions (Mock data)
-              SliverPadding(
-                padding: const EdgeInsets.symmetric(horizontal: 24),
-                sliver: SliverList(
-                  delegate: SliverChildListDelegate([
-                    SubscriptionCard(
-                      title: 'Netflix',
-                      category: 'Развлечения',
-                      price: 990,
-                      nextBillingDate:
-                          DateTime.now().add(const Duration(days: 2)),
-                      icon: Icons.movie_outlined,
+                  // Subscriptions List Title
+                  SliverPadding(
+                    padding: const EdgeInsets.fromLTRB(24, 32, 24, 16),
+                    sliver: SliverToBoxAdapter(
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text('Предстоящие платежи',
+                              style: context.titleMedium
+                                  ?.copyWith(fontWeight: FontWeight.bold)),
+                          TextButton(
+                            onPressed: () =>
+                                context.push(AppRouter.analyticsPath),
+                            child: const Text('Все'),
+                          ),
+                        ],
+                      ),
                     ),
-                    SubscriptionCard(
-                      title: 'Spotify',
-                      category: 'Музыка',
-                      price: 299,
-                      nextBillingDate:
-                          DateTime.now().add(const Duration(days: 5)),
-                      icon: Icons.music_note_outlined,
-                    ),
-                    SubscriptionCard(
-                      title: 'YouTube Premium',
-                      category: 'Видео',
-                      price: 399,
-                      nextBillingDate:
-                          DateTime.now().add(const Duration(days: 12)),
-                      icon: Icons.play_circle_outline,
-                    ),
-                  ]),
-                ),
-              ),
+                  ),
 
-              const SliverToBoxAdapter(child: SizedBox(height: 100)),
-            ],
+                  // List of Subscriptions
+                  if (subscriptions.isEmpty)
+                    const SliverToBoxAdapter(
+                      child: Center(
+                        child: Padding(
+                          padding: EdgeInsets.only(top: 40),
+                          child: Text('У вас пока нет подписок',
+                              style: TextStyle(color: AppTheme.textSecondary)),
+                        ),
+                      ),
+                    )
+                  else
+                    SliverPadding(
+                      padding: const EdgeInsets.symmetric(horizontal: 24),
+                      sliver: SliverList(
+                        delegate: SliverChildBuilderDelegate(
+                          (context, index) {
+                            final sub = subscriptions[index];
+                            return SubscriptionCard(
+                              title: sub.name,
+                              category: sub.category,
+                              price: sub.price,
+                              nextBillingDate: sub.nextBillingDate,
+                              icon: _getCategoryIcon(sub.category),
+                            );
+                          },
+                          childCount: subscriptions.length,
+                        ),
+                      ),
+                    ),
+
+                  const SliverToBoxAdapter(child: SizedBox(height: 100)),
+                ],
+              );
+            },
           ),
         ),
       ),
@@ -159,6 +178,23 @@ class HomeScreen extends StatelessWidget {
             style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
       ),
     );
+  }
+
+  IconData _getCategoryIcon(String category) {
+    switch (category) {
+      case 'Развлечения':
+        return Icons.movie_outlined;
+      case 'Музыка':
+        return Icons.music_note_outlined;
+      case 'Видео':
+        return Icons.play_circle_outline;
+      case 'Работа':
+        return Icons.work_outline;
+      case 'Здоровье':
+        return Icons.medical_services_outlined;
+      default:
+        return Icons.category_outlined;
+    }
   }
 
   Widget _buildMiniStat(String label, String value) {

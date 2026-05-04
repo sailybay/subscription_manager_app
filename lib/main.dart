@@ -5,6 +5,8 @@ import 'core/router/app_router.dart';
 import 'core/theme/app_theme.dart';
 import 'presentation/blocs/auth/auth_bloc.dart';
 import 'presentation/blocs/auth/auth_event.dart';
+import 'presentation/blocs/subscription/subscription_bloc.dart';
+import 'presentation/blocs/subscription/subscription_event.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -17,8 +19,14 @@ class SubscriptionManagerApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return BlocProvider(
-      create: (context) => di.sl<AuthBloc>()..add(AuthCheckRequested()),
+    return MultiBlocProvider(
+      providers: [
+        BlocProvider(
+            create: (context) => di.sl<AuthBloc>()..add(AuthCheckRequested())),
+        BlocProvider(
+            create: (context) => di.sl<SubscriptionBloc>()
+              ..add(SubscriptionSubscriptionRequested())),
+      ],
       child: MaterialApp.router(
         title: 'Subscription Manager',
         debugShowCheckedModeBanner: false,

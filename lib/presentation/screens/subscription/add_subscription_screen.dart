@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/extensions/context_extensions.dart';
+import '../../blocs/subscription/subscription_bloc.dart';
+import '../../blocs/subscription/subscription_event.dart';
 import '../../widgets/common/app_button.dart';
 import '../../widgets/common/app_text_field.dart';
 
@@ -27,14 +30,17 @@ class _AddSubscriptionScreenState extends State<AddSubscriptionScreen> {
   ];
 
   @override
+  void dispose() {
+    _nameController.dispose();
+    _priceController.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Новая подписка'),
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: AppTheme.textPrimary),
-          onPressed: () => Navigator.of(context).pop(),
-        ),
       ),
       body: Container(
         decoration: const BoxDecoration(gradient: AppTheme.backgroundGradient),
@@ -44,7 +50,6 @@ class _AddSubscriptionScreenState extends State<AddSubscriptionScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Иконка-заглушка
                 Center(
                   child: Container(
                     width: 80,
@@ -61,14 +66,12 @@ class _AddSubscriptionScreenState extends State<AddSubscriptionScreen> {
                   ),
                 ),
                 const SizedBox(height: 32),
-
                 AppTextField(
                   controller: _nameController,
                   hintText: 'Название (например, Netflix)',
                   prefixIcon: Icons.edit_outlined,
                 ),
                 const SizedBox(height: 16),
-
                 AppTextField(
                   controller: _priceController,
                   hintText: 'Стоимость',
@@ -76,7 +79,6 @@ class _AddSubscriptionScreenState extends State<AddSubscriptionScreen> {
                   keyboardType: TextInputType.number,
                 ),
                 const SizedBox(height: 24),
-
                 Text('Категория', style: context.titleMedium),
                 const SizedBox(height: 12),
                 Wrap(
@@ -98,7 +100,6 @@ class _AddSubscriptionScreenState extends State<AddSubscriptionScreen> {
                   }).toList(),
                 ),
                 const SizedBox(height: 24),
-
                 Text('Дата платежа', style: context.titleMedium),
                 const SizedBox(height: 12),
                 InkWell(
@@ -106,7 +107,8 @@ class _AddSubscriptionScreenState extends State<AddSubscriptionScreen> {
                     final date = await showDatePicker(
                       context: context,
                       initialDate: _selectedDate,
-                      firstDate: DateTime.now(),
+                      firstDate:
+                          DateTime.now().subtract(const Duration(days: 365)),
                       lastDate:
                           DateTime.now().add(const Duration(days: 365 * 5)),
                     );
@@ -136,13 +138,29 @@ class _AddSubscriptionScreenState extends State<AddSubscriptionScreen> {
                   ),
                 ),
                 const SizedBox(height: 48),
-
                 AppButton(
-                  text:
-                      'Добавить за 0₽ / мес', // Цена будет обновляться динамически
+                  text: 'Добавить подписку',
                   onPressed: () {
-                    // Пока просто возвращаемся назад
-                    Navigator.of(context).pop();
+                    final name = _nameController.text.trim();
+                    final price = double.tryParse(_priceController.text) ?? 0.0;
+
+                    if (name.isNotEmpty && price > 0) {
+                      context.read<SubscriptionBloc>().add(
+                            SubscriptionAdded(
+                              name: name,
+                              price: price,
+                              category: _selectedCategory,
+                              nextBillingDate: _selectedDate,
+                            ),
+                          );
+                      Navigator.of(context).pop();
+                    } else {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                            content: Text(
+                                'Пожалуйста, заполните все поля корректно')),
+                      );
+                    }
                   },
                 ),
               ],
