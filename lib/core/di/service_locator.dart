@@ -9,6 +9,7 @@ import '../../presentation/blocs/subscription/subscription_bloc.dart';
 import '../../presentation/blocs/auth/auth_bloc.dart';
 import '../../presentation/blocs/theme/theme_bloc.dart';
 import '../services/notification_service.dart';
+import '../../data/services/email_import_service.dart';
 
 final sl = GetIt.instance;
 
@@ -24,6 +25,7 @@ Future<void> initServiceLocator() async {
   final notificationService = NotificationService();
   await notificationService.init();
   sl.registerLazySingleton<NotificationService>(() => notificationService);
+  sl.registerLazySingleton<EmailImportService>(() => EmailImportService());
 
   // --- Repositories ---
   sl.registerLazySingleton<SubscriptionRepository>(
