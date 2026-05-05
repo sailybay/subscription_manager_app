@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:go_router/go_router.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/extensions/context_extensions.dart';
 import '../../../core/utils/app_utils.dart';
@@ -7,6 +8,7 @@ import '../../blocs/auth/auth_bloc.dart';
 import '../../blocs/auth/auth_event.dart';
 import '../../blocs/auth/auth_state.dart';
 import '../../blocs/subscription/subscription_bloc.dart';
+import '../../blocs/subscription/subscription_event.dart';
 import '../../blocs/subscription/subscription_state.dart';
 
 class SettingsScreen extends StatefulWidget {
@@ -67,8 +69,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                         ),
                       ),
                       IconButton(
-                        onPressed: () =>
-                            context.read<AuthBloc>().add(AuthLogoutRequested()),
+                        onPressed: () => _confirmLogout(context),
                         icon: const Icon(Icons.logout,
                             color: Colors.redAccent, size: 20),
                       ),
@@ -88,10 +89,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     value: _notificationsEnabled,
                     onChanged: (val) =>
                         setState(() => _notificationsEnabled = val),
-                    activeColor: context.colors.primary,
+                    activeThumbColor: context.colors.primary,
                   ),
                 ),
-                const SizedBox(height: 12),
+                const SizedBox(height: 24),
 
                 _buildSettingTile(
                   icon: Icons.dark_mode_outlined,
@@ -100,7 +101,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   trailing: Switch(
                     value: _darkMode,
                     onChanged: (val) => setState(() => _darkMode = val),
-                    activeColor: context.colors.primary,
+                    activeThumbColor: context.colors.primary,
                   ),
                 ),
 
@@ -121,9 +122,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   title: 'Очистить базу',
                   subtitle: 'Удалить все данные безвозвратно',
                   titleColor: Colors.redAccent,
-                  onTap: () {
-                    // TODO: Добавить подтверждение
-                  },
+                  onTap: () => _confirmClearData(context),
                 ),
               ],
             );
@@ -179,8 +178,55 @@ class _SettingsScreenState extends State<SettingsScreen> {
     final subState = context.read<SubscriptionBloc>().state;
     if (subState is SubscriptionLoaded) {
       final csv = AppUtils.generateSubscriptionCsv(subState.allSubscriptions);
-      debugPrint('Generated CSV:\n$csv'); // Используем переменную для лога
-      AppUtils.showSnackBar(context, 'Файл экспортирован успешно (имитация)');
+      debugPrint('Generated CSV:\n$csv');
+      AppUtils.showSnackBar(context, 'Данные экспортированы в консоль');
     }
+  }
+
+  void _confirmClearData(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Очистить все данные?'),
+        content: const Text(
+            'Это удалит все ваши подписки и уведомления. Это действие необратимо.'),
+        actions: [
+          TextButton(
+              onPressed: () => context.pop(), child: const Text('Отмена')),
+          TextButton(
+            onPressed: () {
+              context
+                  .read<SubscriptionBloc>()
+                  .add(SubscriptionDeleteAllRequested());
+              context.pop();
+              AppUtils.showSnackBar(context, 'База данных успешно очищена');
+            },
+            child: const Text('Удалить всё',
+                style: TextStyle(color: Colors.redAccent)),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _confirmLogout(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Выйти из аккаунта?'),
+        actions: [
+          TextButton(
+              onPressed: () => context.pop(), child: const Text('Отмена')),
+          TextButton(
+            onPressed: () {
+              context.read<AuthBloc>().add(AuthLogoutRequested());
+              context.pop();
+            },
+            child:
+                const Text('Выход', style: TextStyle(color: Colors.redAccent)),
+          ),
+        ],
+      ),
+    );
   }
 }

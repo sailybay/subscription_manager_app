@@ -10,6 +10,8 @@ sealed class SubscriptionEvent extends Equatable {
 
 final class SubscriptionSubscriptionRequested extends SubscriptionEvent {}
 
+final class SubscriptionDeleteAllRequested extends SubscriptionEvent {}
+
 final class SubscriptionAdded extends SubscriptionEvent {
   final String name;
   final double price;

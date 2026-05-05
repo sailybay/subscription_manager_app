@@ -14,6 +14,7 @@ class SubscriptionBloc extends Bloc<SubscriptionEvent, SubscriptionState> {
   SubscriptionBloc(this._repository, this._notificationService)
       : super(SubscriptionInitial()) {
     on<SubscriptionSubscriptionRequested>(_onSubscriptionRequested);
+    on<SubscriptionDeleteAllRequested>(_onDeleteAllRequested);
     on<SubscriptionAdded>(_onSubscriptionAdded);
     on<SubscriptionUpdated>(_onSubscriptionUpdated);
     on<SubscriptionDeleted>(_onSubscriptionDeleted);
@@ -35,6 +36,26 @@ class SubscriptionBloc extends Bloc<SubscriptionEvent, SubscriptionState> {
       onError: (e) => add(
           const SubscriptionErrorOccurredInternal('Ошибка загрузки данных')),
     );
+  }
+
+  Future<void> _onDeleteAllRequested(SubscriptionDeleteAllRequested event,
+      Emitter<SubscriptionState> emit) async {
+    try {
+      final currentState = state;
+      if (currentState is SubscriptionLoaded) {
+        // Отменяем все напоминания перед удалением
+        for (var sub in currentState.allSubscriptions) {
+          await _notificationService.cancelReminder(sub.id);
+        }
+        // Здесь должен быть метод в репозитории для удаления всех.
+        // Если его нет, удаляем по одному (или добавим в репозиторий).
+        for (var sub in currentState.allSubscriptions) {
+          await _repository.deleteSubscription(sub.id);
+        }
+      }
+    } catch (e) {
+      add(const SubscriptionErrorOccurredInternal('Ошибка при очистке базы'));
+    }
   }
 
   void _onSubscriptionUpdatedInternal(
@@ -82,6 +103,8 @@ class SubscriptionBloc extends Bloc<SubscriptionEvent, SubscriptionState> {
 
   List<Subscription> _applyFilters(
       List<Subscription> subs, String query, String? category) {
+    if (query.isEmpty && category == null) return subs;
+
     return subs.where((s) {
       final matchesQuery = s.name.toLowerCase().contains(query.toLowerCase());
       final matchesCategory = category == null || s.category == category;
@@ -102,9 +125,11 @@ class SubscriptionBloc extends Bloc<SubscriptionEvent, SubscriptionState> {
           price: event.price,
           category: event.category,
           nextBillingDate: event.nextBillingDate);
-      await _repository.addSubscription(newSub);
-      // Примечание: Уведомление лучше планировать после того, как БД присвоит ID,
-      // но для MVP мы можем перепланировать все уведомления при получении нового списка из базы или использовать данные события.
+      final id = await _repository.addSubscription(newSub);
+
+      // Планируем уведомление с реальным ID
+      await _notificationService
+          .scheduleSubscriptionReminder(newSub.copyWith(id: id));
     } catch (_) {
       add(const SubscriptionErrorOccurredInternal('Ошибка при добавлении'));
     }

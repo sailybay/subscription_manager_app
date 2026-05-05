@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:go_router/go_router.dart';
 import '../../../core/theme/app_theme.dart';
+import '../../../core/constants/app_constants.dart';
 import '../../../core/extensions/context_extensions.dart';
+import '../../../core/utils/app_utils.dart';
 import '../../../domain/entities/subscription.dart';
 import '../../blocs/subscription/subscription_bloc.dart';
 import '../../blocs/subscription/subscription_event.dart';
@@ -23,25 +26,16 @@ class _AddSubscriptionScreenState extends State<AddSubscriptionScreen> {
   late DateTime _selectedDate;
   late String _selectedCategory;
 
-  final List<String> _categories = [
-    'Развлечения',
-    'Музыка',
-    'Видео',
-    'Работа',
-    'Здоровье',
-    'Другое'
-  ];
-
   @override
   void initState() {
     super.initState();
-    // Инициализация данными, если мы в режиме редактирования
     _nameController =
         TextEditingController(text: widget.subscription?.name ?? '');
     _priceController = TextEditingController(
         text: widget.subscription?.price.toString() ?? '');
     _selectedDate = widget.subscription?.nextBillingDate ?? DateTime.now();
-    _selectedCategory = widget.subscription?.category ?? 'Развлечения';
+    _selectedCategory =
+        widget.subscription?.category ?? AppConstants.categories.first;
   }
 
   @override
@@ -58,6 +52,13 @@ class _AddSubscriptionScreenState extends State<AddSubscriptionScreen> {
     return Scaffold(
       appBar: AppBar(
         title: Text(isEditing ? 'Редактировать' : 'Новая подписка'),
+        actions: [
+          if (isEditing)
+            IconButton(
+              icon: const Icon(Icons.delete_outline, color: Colors.redAccent),
+              onPressed: () => _confirmDelete(context),
+            ),
+        ],
       ),
       body: Container(
         decoration: const BoxDecoration(gradient: AppTheme.backgroundGradient),
@@ -95,16 +96,17 @@ class _AddSubscriptionScreenState extends State<AddSubscriptionScreen> {
                 const SizedBox(height: 16),
                 AppTextField(
                   controller: _priceController,
-                  hintText: 'Стоимость',
+                  hintText: 'Стоимость (₽)',
                   prefixIcon: Icons.payments_outlined,
-                  keyboardType: TextInputType.number,
+                  keyboardType:
+                      const TextInputType.numberWithOptions(decimal: true),
                 ),
                 const SizedBox(height: 24),
                 Text('Категория', style: context.titleMedium),
                 const SizedBox(height: 12),
                 Wrap(
                   spacing: 8,
-                  children: _categories.map((cat) {
+                  children: AppConstants.categories.map((cat) {
                     final isSelected = _selectedCategory == cat;
                     return ChoiceChip(
                       label: Text(cat),
@@ -148,7 +150,7 @@ class _AddSubscriptionScreenState extends State<AddSubscriptionScreen> {
                             color: AppTheme.textSecondary, size: 20),
                         const SizedBox(width: 12),
                         Text(
-                          '${_selectedDate.day}.${_selectedDate.month}.${_selectedDate.year}',
+                          AppUtils.formatDate(_selectedDate),
                           style: const TextStyle(color: AppTheme.textPrimary),
                         ),
                         const Spacer(),
@@ -161,45 +163,76 @@ class _AddSubscriptionScreenState extends State<AddSubscriptionScreen> {
                 const SizedBox(height: 48),
                 AppButton(
                   text: isEditing ? 'Обновить данные' : 'Добавить подписку',
-                  onPressed: () {
-                    final name = _nameController.text.trim();
-                    final price = double.tryParse(_priceController.text) ?? 0.0;
-
-                    if (name.isNotEmpty && price > 0) {
-                      if (isEditing) {
-                        context.read<SubscriptionBloc>().add(
-                              SubscriptionUpdated(
-                                id: widget.subscription!.id,
-                                name: name,
-                                price: price,
-                                category: _selectedCategory,
-                                nextBillingDate: _selectedDate,
-                              ),
-                            );
-                      } else {
-                        context.read<SubscriptionBloc>().add(
-                              SubscriptionAdded(
-                                name: name,
-                                price: price,
-                                category: _selectedCategory,
-                                nextBillingDate: _selectedDate,
-                              ),
-                            );
-                      }
-                      Navigator.of(context).pop();
-                    } else {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                            content: Text(
-                                'Пожалуйста, заполните все поля корректно')),
-                      );
-                    }
-                  },
+                  onPressed: () => _onSave(context),
                 ),
               ],
             ),
           ),
         ),
+      ),
+    );
+  }
+
+  void _onSave(BuildContext context) {
+    final name = _nameController.text.trim();
+    final priceStr = _priceController.text.replaceAll(',', '.');
+    final price = double.tryParse(priceStr) ?? 0.0;
+
+    if (name.isEmpty) {
+      AppUtils.showSnackBar(context, 'Введите название подписки',
+          isError: true);
+      return;
+    }
+    if (price <= 0) {
+      AppUtils.showSnackBar(context, 'Введите корректную стоимость',
+          isError: true);
+      return;
+    }
+
+    final isEditing = widget.subscription != null;
+    if (isEditing) {
+      context.read<SubscriptionBloc>().add(
+            SubscriptionUpdated(
+              id: widget.subscription!.id,
+              name: name,
+              price: price,
+              category: _selectedCategory,
+              nextBillingDate: _selectedDate,
+            ),
+          );
+    } else {
+      context.read<SubscriptionBloc>().add(
+            SubscriptionAdded(
+              name: name,
+              price: price,
+              category: _selectedCategory,
+              nextBillingDate: _selectedDate,
+            ),
+          );
+    }
+    context.pop();
+  }
+
+  void _confirmDelete(BuildContext parentContext) {
+    final bloc = parentContext.read<SubscriptionBloc>();
+    showDialog(
+      context: parentContext,
+      builder: (context) => AlertDialog(
+        title: const Text('Удалить подписку?'),
+        content: const Text('Это действие нельзя будет отменить.'),
+        actions: [
+          TextButton(
+              onPressed: () => context.pop(), child: const Text('Отмена')),
+          TextButton(
+            onPressed: () {
+              bloc.add(SubscriptionDeleted(widget.subscription!.id));
+              context.pop(); // Close dialog
+              parentContext.pop(); // Return to home
+            },
+            child: const Text('Удалить',
+                style: TextStyle(color: Colors.redAccent)),
+          ),
+        ],
       ),
     );
   }

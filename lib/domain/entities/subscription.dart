@@ -15,6 +15,22 @@ class Subscription extends Equatable {
     required this.nextBillingDate,
   });
 
+  Subscription copyWith({
+    int? id,
+    String? name,
+    double? price,
+    String? category,
+    DateTime? nextBillingDate,
+  }) {
+    return Subscription(
+      id: id ?? this.id,
+      name: name ?? this.name,
+      price: price ?? this.price,
+      category: category ?? this.category,
+      nextBillingDate: nextBillingDate ?? this.nextBillingDate,
+    );
+  }
+
   @override
   List<Object?> get props => [id, name, price, category, nextBillingDate];
 }

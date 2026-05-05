@@ -22,8 +22,8 @@ class SubscriptionRepositoryImpl implements SubscriptionRepository {
   }
 
   @override
-  Future<void> addSubscription(Subscription subscription) async {
-    await _db.into(_db.subscriptions).insert(
+  Future<int> addSubscription(Subscription subscription) async {
+    return await _db.into(_db.subscriptions).insert(
           db.SubscriptionsCompanion.insert(
             name: subscription.name,
             price: subscription.price,

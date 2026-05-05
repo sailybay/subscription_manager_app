@@ -12,10 +12,10 @@ extension ContextExt on BuildContext {
 
   // Шрифт (удобные алиасы)
   TextStyle? get displayLarge => text.displayLarge;
+  TextStyle? get displayMedium => text.displayMedium;
   TextStyle? get headlineMedium => text.headlineMedium;
+  TextStyle? get titleLarge => text.titleLarge;
   TextStyle? get titleMedium => text.titleMedium;
   TextStyle? get bodyMedium => text.bodyMedium;
-
-  // Навигация (короткий доступ)
-  void pop<T>([T? result]) => Navigator.of(this).pop(result);
+  TextStyle? get bodySmall => text.bodySmall;
 }

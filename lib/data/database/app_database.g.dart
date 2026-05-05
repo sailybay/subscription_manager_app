@@ -3,12 +3,12 @@
 part of 'app_database.dart';
 
 // ignore_for_file: type=lint
-class $SubscriptionsTable extends Subscriptions
-    with TableInfo<$SubscriptionsTable, SubscriptionTableData> {
+class $SubscriptionTableTable extends SubscriptionTable
+    with TableInfo<$SubscriptionTableTable, SubscriptionTableData> {
   @override
   final GeneratedDatabase attachedDatabase;
   final String? _alias;
-  $SubscriptionsTable(this.attachedDatabase, [this._alias]);
+  $SubscriptionTableTable(this.attachedDatabase, [this._alias]);
   static const VerificationMeta _idMeta = const VerificationMeta('id');
   @override
   late final GeneratedColumn<int> id = GeneratedColumn<int>(
@@ -22,10 +22,7 @@ class $SubscriptionsTable extends Subscriptions
   @override
   late final GeneratedColumn<String> name = GeneratedColumn<String>(
       'name', aliasedName, false,
-      additionalChecks:
-          GeneratedColumn.checkTextLength(minTextLength: 1, maxTextLength: 50),
-      type: DriftSqlType.string,
-      requiredDuringInsert: true);
+      type: DriftSqlType.string, requiredDuringInsert: true);
   static const VerificationMeta _priceMeta = const VerificationMeta('price');
   @override
   late final GeneratedColumn<double> price = GeneratedColumn<double>(
@@ -43,22 +40,14 @@ class $SubscriptionsTable extends Subscriptions
   late final GeneratedColumn<DateTime> nextBillingDate =
       GeneratedColumn<DateTime>('next_billing_date', aliasedName, false,
           type: DriftSqlType.dateTime, requiredDuringInsert: true);
-  static const VerificationMeta _createdAtMeta =
-      const VerificationMeta('createdAt');
-  @override
-  late final GeneratedColumn<DateTime> createdAt = GeneratedColumn<DateTime>(
-      'created_at', aliasedName, false,
-      type: DriftSqlType.dateTime,
-      requiredDuringInsert: false,
-      defaultValue: currentDateAndTime);
   @override
   List<GeneratedColumn> get $columns =>
-      [id, name, price, category, nextBillingDate, createdAt];
+      [id, name, price, category, nextBillingDate];
   @override
   String get aliasedName => _alias ?? actualTableName;
   @override
   String get actualTableName => $name;
-  static const String $name = 'subscriptions';
+  static const String $name = 'subscription_table';
   @override
   VerificationContext validateIntegrity(
       Insertable<SubscriptionTableData> instance,
@@ -94,10 +83,6 @@ class $SubscriptionsTable extends Subscriptions
     } else if (isInserting) {
       context.missing(_nextBillingDateMeta);
     }
-    if (data.containsKey('created_at')) {
-      context.handle(_createdAtMeta,
-          createdAt.isAcceptableOrUnknown(data['created_at']!, _createdAtMeta));
-    }
     return context;
   }
 
@@ -117,14 +102,12 @@ class $SubscriptionsTable extends Subscriptions
           .read(DriftSqlType.string, data['${effectivePrefix}category'])!,
       nextBillingDate: attachedDatabase.typeMapping.read(
           DriftSqlType.dateTime, data['${effectivePrefix}next_billing_date'])!,
-      createdAt: attachedDatabase.typeMapping
-          .read(DriftSqlType.dateTime, data['${effectivePrefix}created_at'])!,
     );
   }
 
   @override
-  $SubscriptionsTable createAlias(String alias) {
-    return $SubscriptionsTable(attachedDatabase, alias);
+  $SubscriptionTableTable createAlias(String alias) {
+    return $SubscriptionTableTable(attachedDatabase, alias);
   }
 }
 
@@ -135,14 +118,12 @@ class SubscriptionTableData extends DataClass
   final double price;
   final String category;
   final DateTime nextBillingDate;
-  final DateTime createdAt;
   const SubscriptionTableData(
       {required this.id,
       required this.name,
       required this.price,
       required this.category,
-      required this.nextBillingDate,
-      required this.createdAt});
+      required this.nextBillingDate});
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
     final map = <String, Expression>{};
@@ -151,18 +132,16 @@ class SubscriptionTableData extends DataClass
     map['price'] = Variable<double>(price);
     map['category'] = Variable<String>(category);
     map['next_billing_date'] = Variable<DateTime>(nextBillingDate);
-    map['created_at'] = Variable<DateTime>(createdAt);
     return map;
   }
 
-  SubscriptionsCompanion toCompanion(bool nullToAbsent) {
-    return SubscriptionsCompanion(
+  SubscriptionTableCompanion toCompanion(bool nullToAbsent) {
+    return SubscriptionTableCompanion(
       id: Value(id),
       name: Value(name),
       price: Value(price),
       category: Value(category),
       nextBillingDate: Value(nextBillingDate),
-      createdAt: Value(createdAt),
     );
   }
 
@@ -175,7 +154,6 @@ class SubscriptionTableData extends DataClass
       price: serializer.fromJson<double>(json['price']),
       category: serializer.fromJson<String>(json['category']),
       nextBillingDate: serializer.fromJson<DateTime>(json['nextBillingDate']),
-      createdAt: serializer.fromJson<DateTime>(json['createdAt']),
     );
   }
   @override
@@ -187,7 +165,6 @@ class SubscriptionTableData extends DataClass
       'price': serializer.toJson<double>(price),
       'category': serializer.toJson<String>(category),
       'nextBillingDate': serializer.toJson<DateTime>(nextBillingDate),
-      'createdAt': serializer.toJson<DateTime>(createdAt),
     };
   }
 
@@ -196,17 +173,15 @@ class SubscriptionTableData extends DataClass
           String? name,
           double? price,
           String? category,
-          DateTime? nextBillingDate,
-          DateTime? createdAt}) =>
+          DateTime? nextBillingDate}) =>
       SubscriptionTableData(
         id: id ?? this.id,
         name: name ?? this.name,
         price: price ?? this.price,
         category: category ?? this.category,
         nextBillingDate: nextBillingDate ?? this.nextBillingDate,
-        createdAt: createdAt ?? this.createdAt,
       );
-  SubscriptionTableData copyWithCompanion(SubscriptionsCompanion data) {
+  SubscriptionTableData copyWithCompanion(SubscriptionTableCompanion data) {
     return SubscriptionTableData(
       id: data.id.present ? data.id.value : this.id,
       name: data.name.present ? data.name.value : this.name,
@@ -215,7 +190,6 @@ class SubscriptionTableData extends DataClass
       nextBillingDate: data.nextBillingDate.present
           ? data.nextBillingDate.value
           : this.nextBillingDate,
-      createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
     );
   }
 
@@ -226,15 +200,13 @@ class SubscriptionTableData extends DataClass
           ..write('name: $name, ')
           ..write('price: $price, ')
           ..write('category: $category, ')
-          ..write('nextBillingDate: $nextBillingDate, ')
-          ..write('createdAt: $createdAt')
+          ..write('nextBillingDate: $nextBillingDate')
           ..write(')'))
         .toString();
   }
 
   @override
-  int get hashCode =>
-      Object.hash(id, name, price, category, nextBillingDate, createdAt);
+  int get hashCode => Object.hash(id, name, price, category, nextBillingDate);
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
@@ -243,32 +215,29 @@ class SubscriptionTableData extends DataClass
           other.name == this.name &&
           other.price == this.price &&
           other.category == this.category &&
-          other.nextBillingDate == this.nextBillingDate &&
-          other.createdAt == this.createdAt);
+          other.nextBillingDate == this.nextBillingDate);
 }
 
-class SubscriptionsCompanion extends UpdateCompanion<SubscriptionTableData> {
+class SubscriptionTableCompanion
+    extends UpdateCompanion<SubscriptionTableData> {
   final Value<int> id;
   final Value<String> name;
   final Value<double> price;
   final Value<String> category;
   final Value<DateTime> nextBillingDate;
-  final Value<DateTime> createdAt;
-  const SubscriptionsCompanion({
+  const SubscriptionTableCompanion({
     this.id = const Value.absent(),
     this.name = const Value.absent(),
     this.price = const Value.absent(),
     this.category = const Value.absent(),
     this.nextBillingDate = const Value.absent(),
-    this.createdAt = const Value.absent(),
   });
-  SubscriptionsCompanion.insert({
+  SubscriptionTableCompanion.insert({
     this.id = const Value.absent(),
     required String name,
     required double price,
     required String category,
     required DateTime nextBillingDate,
-    this.createdAt = const Value.absent(),
   })  : name = Value(name),
         price = Value(price),
         category = Value(category),
@@ -279,7 +248,6 @@ class SubscriptionsCompanion extends UpdateCompanion<SubscriptionTableData> {
     Expression<double>? price,
     Expression<String>? category,
     Expression<DateTime>? nextBillingDate,
-    Expression<DateTime>? createdAt,
   }) {
     return RawValuesInsertable({
       if (id != null) 'id': id,
@@ -287,24 +255,21 @@ class SubscriptionsCompanion extends UpdateCompanion<SubscriptionTableData> {
       if (price != null) 'price': price,
       if (category != null) 'category': category,
       if (nextBillingDate != null) 'next_billing_date': nextBillingDate,
-      if (createdAt != null) 'created_at': createdAt,
     });
   }
 
-  SubscriptionsCompanion copyWith(
+  SubscriptionTableCompanion copyWith(
       {Value<int>? id,
       Value<String>? name,
       Value<double>? price,
       Value<String>? category,
-      Value<DateTime>? nextBillingDate,
-      Value<DateTime>? createdAt}) {
-    return SubscriptionsCompanion(
+      Value<DateTime>? nextBillingDate}) {
+    return SubscriptionTableCompanion(
       id: id ?? this.id,
       name: name ?? this.name,
       price: price ?? this.price,
       category: category ?? this.category,
       nextBillingDate: nextBillingDate ?? this.nextBillingDate,
-      createdAt: createdAt ?? this.createdAt,
     );
   }
 
@@ -326,21 +291,240 @@ class SubscriptionsCompanion extends UpdateCompanion<SubscriptionTableData> {
     if (nextBillingDate.present) {
       map['next_billing_date'] = Variable<DateTime>(nextBillingDate.value);
     }
-    if (createdAt.present) {
-      map['created_at'] = Variable<DateTime>(createdAt.value);
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('SubscriptionTableCompanion(')
+          ..write('id: $id, ')
+          ..write('name: $name, ')
+          ..write('price: $price, ')
+          ..write('category: $category, ')
+          ..write('nextBillingDate: $nextBillingDate')
+          ..write(')'))
+        .toString();
+  }
+}
+
+class $UserTableTable extends UserTable
+    with TableInfo<$UserTableTable, UserTableData> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $UserTableTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<int> id = GeneratedColumn<int>(
+      'id', aliasedName, false,
+      hasAutoIncrement: true,
+      type: DriftSqlType.int,
+      requiredDuringInsert: false,
+      defaultConstraints:
+          GeneratedColumn.constraintIsAlways('PRIMARY KEY AUTOINCREMENT'));
+  static const VerificationMeta _emailMeta = const VerificationMeta('email');
+  @override
+  late final GeneratedColumn<String> email = GeneratedColumn<String>(
+      'email', aliasedName, false,
+      additionalChecks:
+          GeneratedColumn.checkTextLength(minTextLength: 3, maxTextLength: 50),
+      type: DriftSqlType.string,
+      requiredDuringInsert: true,
+      $customConstraints: 'UNIQUE');
+  static const VerificationMeta _passwordMeta =
+      const VerificationMeta('password');
+  @override
+  late final GeneratedColumn<String> password = GeneratedColumn<String>(
+      'password', aliasedName, false,
+      additionalChecks:
+          GeneratedColumn.checkTextLength(minTextLength: 4, maxTextLength: 20),
+      type: DriftSqlType.string,
+      requiredDuringInsert: true);
+  @override
+  List<GeneratedColumn> get $columns => [id, email, password];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'user_table';
+  @override
+  VerificationContext validateIntegrity(Insertable<UserTableData> instance,
+      {bool isInserting = false}) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    }
+    if (data.containsKey('email')) {
+      context.handle(
+          _emailMeta, email.isAcceptableOrUnknown(data['email']!, _emailMeta));
+    } else if (isInserting) {
+      context.missing(_emailMeta);
+    }
+    if (data.containsKey('password')) {
+      context.handle(_passwordMeta,
+          password.isAcceptableOrUnknown(data['password']!, _passwordMeta));
+    } else if (isInserting) {
+      context.missing(_passwordMeta);
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  UserTableData map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return UserTableData(
+      id: attachedDatabase.typeMapping
+          .read(DriftSqlType.int, data['${effectivePrefix}id'])!,
+      email: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}email'])!,
+      password: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}password'])!,
+    );
+  }
+
+  @override
+  $UserTableTable createAlias(String alias) {
+    return $UserTableTable(attachedDatabase, alias);
+  }
+}
+
+class UserTableData extends DataClass implements Insertable<UserTableData> {
+  final int id;
+  final String email;
+  final String password;
+  const UserTableData(
+      {required this.id, required this.email, required this.password});
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<int>(id);
+    map['email'] = Variable<String>(email);
+    map['password'] = Variable<String>(password);
+    return map;
+  }
+
+  UserTableCompanion toCompanion(bool nullToAbsent) {
+    return UserTableCompanion(
+      id: Value(id),
+      email: Value(email),
+      password: Value(password),
+    );
+  }
+
+  factory UserTableData.fromJson(Map<String, dynamic> json,
+      {ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return UserTableData(
+      id: serializer.fromJson<int>(json['id']),
+      email: serializer.fromJson<String>(json['email']),
+      password: serializer.fromJson<String>(json['password']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<int>(id),
+      'email': serializer.toJson<String>(email),
+      'password': serializer.toJson<String>(password),
+    };
+  }
+
+  UserTableData copyWith({int? id, String? email, String? password}) =>
+      UserTableData(
+        id: id ?? this.id,
+        email: email ?? this.email,
+        password: password ?? this.password,
+      );
+  UserTableData copyWithCompanion(UserTableCompanion data) {
+    return UserTableData(
+      id: data.id.present ? data.id.value : this.id,
+      email: data.email.present ? data.email.value : this.email,
+      password: data.password.present ? data.password.value : this.password,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('UserTableData(')
+          ..write('id: $id, ')
+          ..write('email: $email, ')
+          ..write('password: $password')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(id, email, password);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is UserTableData &&
+          other.id == this.id &&
+          other.email == this.email &&
+          other.password == this.password);
+}
+
+class UserTableCompanion extends UpdateCompanion<UserTableData> {
+  final Value<int> id;
+  final Value<String> email;
+  final Value<String> password;
+  const UserTableCompanion({
+    this.id = const Value.absent(),
+    this.email = const Value.absent(),
+    this.password = const Value.absent(),
+  });
+  UserTableCompanion.insert({
+    this.id = const Value.absent(),
+    required String email,
+    required String password,
+  })  : email = Value(email),
+        password = Value(password);
+  static Insertable<UserTableData> custom({
+    Expression<int>? id,
+    Expression<String>? email,
+    Expression<String>? password,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (email != null) 'email': email,
+      if (password != null) 'password': password,
+    });
+  }
+
+  UserTableCompanion copyWith(
+      {Value<int>? id, Value<String>? email, Value<String>? password}) {
+    return UserTableCompanion(
+      id: id ?? this.id,
+      email: email ?? this.email,
+      password: password ?? this.password,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<int>(id.value);
+    }
+    if (email.present) {
+      map['email'] = Variable<String>(email.value);
+    }
+    if (password.present) {
+      map['password'] = Variable<String>(password.value);
     }
     return map;
   }
 
   @override
   String toString() {
-    return (StringBuffer('SubscriptionsCompanion(')
+    return (StringBuffer('UserTableCompanion(')
           ..write('id: $id, ')
-          ..write('name: $name, ')
-          ..write('price: $price, ')
-          ..write('category: $category, ')
-          ..write('nextBillingDate: $nextBillingDate, ')
-          ..write('createdAt: $createdAt')
+          ..write('email: $email, ')
+          ..write('password: $password')
           ..write(')'))
         .toString();
   }
@@ -349,36 +533,37 @@ class SubscriptionsCompanion extends UpdateCompanion<SubscriptionTableData> {
 abstract class _$AppDatabase extends GeneratedDatabase {
   _$AppDatabase(QueryExecutor e) : super(e);
   $AppDatabaseManager get managers => $AppDatabaseManager(this);
-  late final $SubscriptionsTable subscriptions = $SubscriptionsTable(this);
+  late final $SubscriptionTableTable subscriptionTable =
+      $SubscriptionTableTable(this);
+  late final $UserTableTable userTable = $UserTableTable(this);
   @override
   Iterable<TableInfo<Table, Object?>> get allTables =>
       allSchemaEntities.whereType<TableInfo<Table, Object?>>();
   @override
-  List<DatabaseSchemaEntity> get allSchemaEntities => [subscriptions];
+  List<DatabaseSchemaEntity> get allSchemaEntities =>
+      [subscriptionTable, userTable];
 }
 
-typedef $$SubscriptionsTableCreateCompanionBuilder = SubscriptionsCompanion
-    Function({
+typedef $$SubscriptionTableTableCreateCompanionBuilder
+    = SubscriptionTableCompanion Function({
   Value<int> id,
   required String name,
   required double price,
   required String category,
   required DateTime nextBillingDate,
-  Value<DateTime> createdAt,
 });
-typedef $$SubscriptionsTableUpdateCompanionBuilder = SubscriptionsCompanion
-    Function({
+typedef $$SubscriptionTableTableUpdateCompanionBuilder
+    = SubscriptionTableCompanion Function({
   Value<int> id,
   Value<String> name,
   Value<double> price,
   Value<String> category,
   Value<DateTime> nextBillingDate,
-  Value<DateTime> createdAt,
 });
 
-class $$SubscriptionsTableFilterComposer
-    extends Composer<_$AppDatabase, $SubscriptionsTable> {
-  $$SubscriptionsTableFilterComposer({
+class $$SubscriptionTableTableFilterComposer
+    extends Composer<_$AppDatabase, $SubscriptionTableTable> {
+  $$SubscriptionTableTableFilterComposer({
     required super.$db,
     required super.$table,
     super.joinBuilder,
@@ -400,14 +585,11 @@ class $$SubscriptionsTableFilterComposer
   ColumnFilters<DateTime> get nextBillingDate => $composableBuilder(
       column: $table.nextBillingDate,
       builder: (column) => ColumnFilters(column));
-
-  ColumnFilters<DateTime> get createdAt => $composableBuilder(
-      column: $table.createdAt, builder: (column) => ColumnFilters(column));
 }
 
-class $$SubscriptionsTableOrderingComposer
-    extends Composer<_$AppDatabase, $SubscriptionsTable> {
-  $$SubscriptionsTableOrderingComposer({
+class $$SubscriptionTableTableOrderingComposer
+    extends Composer<_$AppDatabase, $SubscriptionTableTable> {
+  $$SubscriptionTableTableOrderingComposer({
     required super.$db,
     required super.$table,
     super.joinBuilder,
@@ -429,14 +611,11 @@ class $$SubscriptionsTableOrderingComposer
   ColumnOrderings<DateTime> get nextBillingDate => $composableBuilder(
       column: $table.nextBillingDate,
       builder: (column) => ColumnOrderings(column));
-
-  ColumnOrderings<DateTime> get createdAt => $composableBuilder(
-      column: $table.createdAt, builder: (column) => ColumnOrderings(column));
 }
 
-class $$SubscriptionsTableAnnotationComposer
-    extends Composer<_$AppDatabase, $SubscriptionsTable> {
-  $$SubscriptionsTableAnnotationComposer({
+class $$SubscriptionTableTableAnnotationComposer
+    extends Composer<_$AppDatabase, $SubscriptionTableTable> {
+  $$SubscriptionTableTableAnnotationComposer({
     required super.$db,
     required super.$table,
     super.joinBuilder,
@@ -457,51 +636,49 @@ class $$SubscriptionsTableAnnotationComposer
 
   GeneratedColumn<DateTime> get nextBillingDate => $composableBuilder(
       column: $table.nextBillingDate, builder: (column) => column);
-
-  GeneratedColumn<DateTime> get createdAt =>
-      $composableBuilder(column: $table.createdAt, builder: (column) => column);
 }
 
-class $$SubscriptionsTableTableManager extends RootTableManager<
+class $$SubscriptionTableTableTableManager extends RootTableManager<
     _$AppDatabase,
-    $SubscriptionsTable,
+    $SubscriptionTableTable,
     SubscriptionTableData,
-    $$SubscriptionsTableFilterComposer,
-    $$SubscriptionsTableOrderingComposer,
-    $$SubscriptionsTableAnnotationComposer,
-    $$SubscriptionsTableCreateCompanionBuilder,
-    $$SubscriptionsTableUpdateCompanionBuilder,
+    $$SubscriptionTableTableFilterComposer,
+    $$SubscriptionTableTableOrderingComposer,
+    $$SubscriptionTableTableAnnotationComposer,
+    $$SubscriptionTableTableCreateCompanionBuilder,
+    $$SubscriptionTableTableUpdateCompanionBuilder,
     (
       SubscriptionTableData,
-      BaseReferences<_$AppDatabase, $SubscriptionsTable, SubscriptionTableData>
+      BaseReferences<_$AppDatabase, $SubscriptionTableTable,
+          SubscriptionTableData>
     ),
     SubscriptionTableData,
     PrefetchHooks Function()> {
-  $$SubscriptionsTableTableManager(_$AppDatabase db, $SubscriptionsTable table)
+  $$SubscriptionTableTableTableManager(
+      _$AppDatabase db, $SubscriptionTableTable table)
       : super(TableManagerState(
           db: db,
           table: table,
           createFilteringComposer: () =>
-              $$SubscriptionsTableFilterComposer($db: db, $table: table),
+              $$SubscriptionTableTableFilterComposer($db: db, $table: table),
           createOrderingComposer: () =>
-              $$SubscriptionsTableOrderingComposer($db: db, $table: table),
+              $$SubscriptionTableTableOrderingComposer($db: db, $table: table),
           createComputedFieldComposer: () =>
-              $$SubscriptionsTableAnnotationComposer($db: db, $table: table),
+              $$SubscriptionTableTableAnnotationComposer(
+                  $db: db, $table: table),
           updateCompanionCallback: ({
             Value<int> id = const Value.absent(),
             Value<String> name = const Value.absent(),
             Value<double> price = const Value.absent(),
             Value<String> category = const Value.absent(),
             Value<DateTime> nextBillingDate = const Value.absent(),
-            Value<DateTime> createdAt = const Value.absent(),
           }) =>
-              SubscriptionsCompanion(
+              SubscriptionTableCompanion(
             id: id,
             name: name,
             price: price,
             category: category,
             nextBillingDate: nextBillingDate,
-            createdAt: createdAt,
           ),
           createCompanionCallback: ({
             Value<int> id = const Value.absent(),
@@ -509,15 +686,13 @@ class $$SubscriptionsTableTableManager extends RootTableManager<
             required double price,
             required String category,
             required DateTime nextBillingDate,
-            Value<DateTime> createdAt = const Value.absent(),
           }) =>
-              SubscriptionsCompanion.insert(
+              SubscriptionTableCompanion.insert(
             id: id,
             name: name,
             price: price,
             category: category,
             nextBillingDate: nextBillingDate,
-            createdAt: createdAt,
           ),
           withReferenceMapper: (p0) => p0
               .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
@@ -526,25 +701,163 @@ class $$SubscriptionsTableTableManager extends RootTableManager<
         ));
 }
 
-typedef $$SubscriptionsTableProcessedTableManager = ProcessedTableManager<
+typedef $$SubscriptionTableTableProcessedTableManager = ProcessedTableManager<
     _$AppDatabase,
-    $SubscriptionsTable,
+    $SubscriptionTableTable,
     SubscriptionTableData,
-    $$SubscriptionsTableFilterComposer,
-    $$SubscriptionsTableOrderingComposer,
-    $$SubscriptionsTableAnnotationComposer,
-    $$SubscriptionsTableCreateCompanionBuilder,
-    $$SubscriptionsTableUpdateCompanionBuilder,
+    $$SubscriptionTableTableFilterComposer,
+    $$SubscriptionTableTableOrderingComposer,
+    $$SubscriptionTableTableAnnotationComposer,
+    $$SubscriptionTableTableCreateCompanionBuilder,
+    $$SubscriptionTableTableUpdateCompanionBuilder,
     (
       SubscriptionTableData,
-      BaseReferences<_$AppDatabase, $SubscriptionsTable, SubscriptionTableData>
+      BaseReferences<_$AppDatabase, $SubscriptionTableTable,
+          SubscriptionTableData>
     ),
     SubscriptionTableData,
+    PrefetchHooks Function()>;
+typedef $$UserTableTableCreateCompanionBuilder = UserTableCompanion Function({
+  Value<int> id,
+  required String email,
+  required String password,
+});
+typedef $$UserTableTableUpdateCompanionBuilder = UserTableCompanion Function({
+  Value<int> id,
+  Value<String> email,
+  Value<String> password,
+});
+
+class $$UserTableTableFilterComposer
+    extends Composer<_$AppDatabase, $UserTableTable> {
+  $$UserTableTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<int> get id => $composableBuilder(
+      column: $table.id, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get email => $composableBuilder(
+      column: $table.email, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get password => $composableBuilder(
+      column: $table.password, builder: (column) => ColumnFilters(column));
+}
+
+class $$UserTableTableOrderingComposer
+    extends Composer<_$AppDatabase, $UserTableTable> {
+  $$UserTableTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<int> get id => $composableBuilder(
+      column: $table.id, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get email => $composableBuilder(
+      column: $table.email, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get password => $composableBuilder(
+      column: $table.password, builder: (column) => ColumnOrderings(column));
+}
+
+class $$UserTableTableAnnotationComposer
+    extends Composer<_$AppDatabase, $UserTableTable> {
+  $$UserTableTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<int> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<String> get email =>
+      $composableBuilder(column: $table.email, builder: (column) => column);
+
+  GeneratedColumn<String> get password =>
+      $composableBuilder(column: $table.password, builder: (column) => column);
+}
+
+class $$UserTableTableTableManager extends RootTableManager<
+    _$AppDatabase,
+    $UserTableTable,
+    UserTableData,
+    $$UserTableTableFilterComposer,
+    $$UserTableTableOrderingComposer,
+    $$UserTableTableAnnotationComposer,
+    $$UserTableTableCreateCompanionBuilder,
+    $$UserTableTableUpdateCompanionBuilder,
+    (
+      UserTableData,
+      BaseReferences<_$AppDatabase, $UserTableTable, UserTableData>
+    ),
+    UserTableData,
+    PrefetchHooks Function()> {
+  $$UserTableTableTableManager(_$AppDatabase db, $UserTableTable table)
+      : super(TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$UserTableTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$UserTableTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$UserTableTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback: ({
+            Value<int> id = const Value.absent(),
+            Value<String> email = const Value.absent(),
+            Value<String> password = const Value.absent(),
+          }) =>
+              UserTableCompanion(
+            id: id,
+            email: email,
+            password: password,
+          ),
+          createCompanionCallback: ({
+            Value<int> id = const Value.absent(),
+            required String email,
+            required String password,
+          }) =>
+              UserTableCompanion.insert(
+            id: id,
+            email: email,
+            password: password,
+          ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .toList(),
+          prefetchHooksCallback: null,
+        ));
+}
+
+typedef $$UserTableTableProcessedTableManager = ProcessedTableManager<
+    _$AppDatabase,
+    $UserTableTable,
+    UserTableData,
+    $$UserTableTableFilterComposer,
+    $$UserTableTableOrderingComposer,
+    $$UserTableTableAnnotationComposer,
+    $$UserTableTableCreateCompanionBuilder,
+    $$UserTableTableUpdateCompanionBuilder,
+    (
+      UserTableData,
+      BaseReferences<_$AppDatabase, $UserTableTable, UserTableData>
+    ),
+    UserTableData,
     PrefetchHooks Function()>;
 
 class $AppDatabaseManager {
   final _$AppDatabase _db;
   $AppDatabaseManager(this._db);
-  $$SubscriptionsTableTableManager get subscriptions =>
-      $$SubscriptionsTableTableManager(_db, _db.subscriptions);
+  $$SubscriptionTableTableTableManager get subscriptionTable =>
+      $$SubscriptionTableTableTableManager(_db, _db.subscriptionTable);
+  $$UserTableTableTableManager get userTable =>
+      $$UserTableTableTableManager(_db, _db.userTable);
 }

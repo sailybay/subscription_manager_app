@@ -34,19 +34,28 @@ class HomeScreen extends StatelessWidget {
             }
 
             if (state is SubscriptionLoaded) {
+              if (state.allSubscriptions.isEmpty) {
+                return _buildFullEmptyState(context);
+              }
+
               return Column(
                 children: [
                   _buildHeader(context, state),
                   _buildSearchAndFilters(context, state),
                   Expanded(
                     child: state.filteredSubscriptions.isEmpty
-                        ? _buildEmptyState()
+                        ? _buildSearchEmptyState()
                         : ListView.builder(
                             padding: const EdgeInsets.all(16),
                             itemCount: state.filteredSubscriptions.length,
                             itemBuilder: (context, index) {
                               final sub = state.filteredSubscriptions[index];
-                              return SubscriptionCard(subscription: sub);
+                              return SubscriptionCard(
+                                subscription: sub,
+                                onTap: () => context.push(
+                                    AppRoutes.addSubscription,
+                                    extra: sub),
+                              );
                             },
                           ),
                   ),
@@ -61,6 +70,39 @@ class HomeScreen extends StatelessWidget {
       floatingActionButton: FloatingActionButton(
         onPressed: () => context.push(AppRoutes.addSubscription),
         child: const Icon(Icons.add),
+      ),
+    );
+  }
+
+  Widget _buildFullEmptyState(BuildContext context) {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(32.0),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(Icons.auto_awesome_motion_outlined,
+                size: 100,
+                color: context.colors.primary.withValues(alpha: 0.3)),
+            const SizedBox(height: 32),
+            Text('Ваш список пуст',
+                style: context.displayMedium?.copyWith(fontSize: 24)),
+            const SizedBox(height: 12),
+            const Text(
+              'Добавьте свою первую подписку, чтобы начать контролировать расходы',
+              textAlign: TextAlign.center,
+              style: TextStyle(color: AppTheme.textSecondary, fontSize: 16),
+            ),
+            const SizedBox(height: 48),
+            SizedBox(
+              width: 200,
+              child: ElevatedButton(
+                onPressed: () => context.push(AppRoutes.addSubscription),
+                child: const Text('Добавить'),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -159,7 +201,7 @@ class HomeScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildEmptyState() {
+  Widget _buildSearchEmptyState() {
     return const Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
