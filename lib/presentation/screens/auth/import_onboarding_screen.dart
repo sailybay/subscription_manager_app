@@ -70,7 +70,8 @@ class _ImportOnboardingScreenState extends State<ImportOnboardingScreen> {
         ),
         child: SafeArea(
           child: Padding(
-            padding: const EdgeInsets.all(32.0),
+            padding:
+                const EdgeInsets.symmetric(horizontal: 24.0, vertical: 32.0),
             child: AnimatedSwitcher(
               duration: const Duration(milliseconds: 500),
               child: _isScanning
@@ -173,13 +174,20 @@ class _ImportOnboardingScreenState extends State<ImportOnboardingScreen> {
               final isSelected = _selectedIds.contains(sub.id);
               return Padding(
                 padding: const EdgeInsets.only(bottom: 12),
-                child: Stack(
-                  children: [
-                    SubscriptionCard(subscription: sub),
-                    Positioned(
-                      top: 8,
-                      right: 8,
-                      child: Checkbox(
+                child: InkWell(
+                  onTap: () {
+                    setState(() {
+                      if (isSelected) {
+                        _selectedIds.remove(sub.id);
+                      } else {
+                        _selectedIds.add(sub.id);
+                      }
+                    });
+                  },
+                  borderRadius: BorderRadius.circular(24),
+                  child: Row(
+                    children: [
+                      Checkbox(
                         value: isSelected,
                         onChanged: (val) {
                           setState(() {
@@ -193,8 +201,12 @@ class _ImportOnboardingScreenState extends State<ImportOnboardingScreen> {
                         shape: const CircleBorder(),
                         activeColor: AppTheme.primaryColor,
                       ),
-                    ),
-                  ],
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: SubscriptionCard(subscription: sub),
+                      ),
+                    ],
+                  ),
                 ),
               );
             },
