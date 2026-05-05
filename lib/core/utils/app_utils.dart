@@ -1,5 +1,6 @@
 import 'package:intl/intl.dart';
 import 'package:flutter/material.dart';
+import '../../domain/entities/subscription.dart';
 
 class AppUtils {
   AppUtils._();
@@ -7,7 +8,7 @@ class AppUtils {
   /// Форматирование валюты с учетом переданного символа. По умолчанию рубль.
   static String formatCurrency(double amount, {String symbol = '₽'}) {
     final formatter = NumberFormat.currency(
-      locale: 'ru_RU', // Можно в будущем вынести в настройки приложения
+      locale: 'ru_RU',
       symbol: symbol,
       decimalDigits: 0,
     );
@@ -22,7 +23,7 @@ class AppUtils {
   static String formatFullDate(DateTime date) =>
       DateFormat('d MMMM yyyy', 'ru_RU').format(date);
 
-  /// Валидация Email с проверкой на null и пустую строку
+  /// Валидация Email
   static String? validateEmail(String? value) {
     if (value == null || value.trim().isEmpty) return 'Введите email';
     final emailRegex = RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$');
@@ -40,10 +41,7 @@ class AppUtils {
   /// Универсальный SnackBar
   static void showSnackBar(BuildContext context, String message,
       {bool isError = false}) {
-    if (!context.mounted) {
-      return;
-    }
-    // Проверка на "живой" контекст (предотвращает баги)
+    if (!context.mounted) return;
 
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
@@ -57,15 +55,14 @@ class AppUtils {
   }
 
   /// Генерация CSV из списка подписок
-  static String generateSubscriptionCsv(List<dynamic> subs) {
+  static String generateSubscriptionCsv(List<Subscription> subs) {
     if (subs.isEmpty) return '';
     final buffer = StringBuffer();
 
-    // Заголовки (с меткой BOM для корректного открытия в Excel)
-    buffer.write('\uFEFF'); // UTF-8 BOM
+    // Заголовки (BOM для Excel)
+    buffer.write('\uFEFF');
     buffer.writeln('Название;Цена;Категория;Дата следующего платежа');
 
-    // Данные
     for (var sub in subs) {
       final name = _escapeCsvField(sub.name);
       final price = sub.price.toString();

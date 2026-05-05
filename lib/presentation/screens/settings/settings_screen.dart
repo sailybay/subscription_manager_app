@@ -1,6 +1,11 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
+import 'package:path_provider/path_provider.dart';
+import 'package:share_plus/share_plus.dart';
+import 'package:path/path.dart' as p;
 import '../../../core/theme/app_theme.dart';
 import '../../../core/extensions/context_extensions.dart';
 import '../../../core/utils/app_utils.dart';
@@ -126,6 +131,15 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 const SizedBox(height: 16),
 
                 _buildSettingTile(
+                  icon: Icons.auto_awesome,
+                  title: 'Импорт из почты',
+                  subtitle: 'Найти подписки автоматически',
+                  titleColor: Colors.amberAccent,
+                  onTap: () => context.push(AppRoutes.importOnboarding),
+                ),
+                const SizedBox(height: 12),
+
+                _buildSettingTile(
                   icon: Icons.file_download_outlined,
                   title: 'Экспорт в CSV',
                   subtitle: 'Выгрузить список подписок в таблицу',
@@ -155,6 +169,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
     Widget? trailing,
     VoidCallback? onTap,
     Color? titleColor,
+    Color? iconColor,
   }) {
     return InkWell(
       onTap: onTap,
@@ -195,13 +210,55 @@ class _SettingsScreenState extends State<SettingsScreen> {
     );
   }
 
-  void _exportData(BuildContext context) {
+  Future<void> _exportData(BuildContext context) async {
     final subState = context.read<SubscriptionBloc>().state;
     if (subState is SubscriptionLoaded) {
+      if (subState.allSubscriptions.isEmpty) {
+        AppUtils.showSnackBar(context, 'Нет данных для экспорта',
+            isError: true);
+        return;
+      }
+
       final csv = AppUtils.generateSubscriptionCsv(subState.allSubscriptions);
-      debugPrint('Generated CSV:\n$csv');
-      AppUtils.showSnackBar(context, 'Данные экспортированы в консоль');
+
+      try {
+        Directory? directory;
+        if (Platform.isWindows) {
+          directory = await getApplicationDocumentsDirectory();
+        } else {
+          directory = await getTemporaryDirectory();
+        }
+
+        final fileName =
+            'subscriptions_export_${DateTime.now().millisecondsSinceEpoch}.csv';
+        final filePath = p.join(directory.path, fileName);
+
+        final file = File(filePath);
+        await file.writeAsString(csv);
+
+        if (!context.mounted) return;
+
+        try {
+          await Share.shareXFiles(
+            [XFile(filePath)],
+            subject: 'Экспорт подписок',
+          );
+        } catch (e) {
+          if (!context.mounted) return;
+          _fallbackToClipboard(
+              context, csv, 'Ошибка плагина. Текст скопирован в буфер.');
+        }
+      } catch (e) {
+        if (!context.mounted) return;
+        _fallbackToClipboard(
+            context, csv, 'Ошибка сохранения. Текст скопирован в буфер.');
+      }
     }
+  }
+
+  void _fallbackToClipboard(BuildContext context, String data, String message) {
+    Clipboard.setData(ClipboardData(text: data));
+    AppUtils.showSnackBar(context, message);
   }
 
   void _confirmClearData(BuildContext context) {
