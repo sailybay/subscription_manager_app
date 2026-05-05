@@ -113,4 +113,12 @@ class AppTheme {
       ),
     );
   }
+
+  /// Утилита для быстрого получения стиля поля ввода
+  static InputDecoration inputDecoration(String label) {
+    return InputDecoration(
+      hintText: label,
+      hintStyle: const TextStyle(color: textHint),
+    );
+  }
 }

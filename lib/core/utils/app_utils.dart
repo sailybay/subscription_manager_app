@@ -48,11 +48,25 @@ class AppUtils {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(message),
-        backgroundColor: isError ? Colors.redAccent : Colors.green,
+        backgroundColor: isError ? Colors.redAccent : Colors.blueAccent,
         behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
         duration: const Duration(seconds: 3),
       ),
     );
+  }
+
+  /// Генерация CSV из списка подписок
+  static String generateSubscriptionCsv(List<dynamic> subs) {
+    if (subs.isEmpty) return '';
+    final buffer = StringBuffer();
+    // Заголовки
+    buffer.writeln('ID,Name,Price,Category,NextBillingDate');
+    // Данные
+    for (var sub in subs) {
+      buffer.writeln(
+          '${sub.id},${sub.name},${sub.price},${sub.category},${sub.nextBillingDate}');
+    }
+    return buffer.toString();
   }
 }

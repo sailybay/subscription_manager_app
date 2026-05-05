@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import '../../../core/extensions/context_extensions.dart';
-import '../../../core/router/app_router.dart';
+import '../../../core/constants/app_constants.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/utils/app_utils.dart';
 import '../../blocs/auth/auth_bloc.dart';
@@ -95,7 +95,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       const SizedBox(height: 24),
                       Center(
                         child: TextButton(
-                          onPressed: () => context.push(AppRouter.registerPath),
+                          onPressed: () => context.push(AppRoutes.register),
                           child: RichText(
                             text: TextSpan(
                               text: 'Нет аккаунта? ',

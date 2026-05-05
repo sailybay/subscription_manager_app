@@ -15,6 +15,7 @@ class AppRoutes {
   static const String home = '/home';
   static const String addSubscription = '/subscription/add';
   static const String analytics = '/analytics';
+  static const String settings = '/settings';
   static const String categories = '/categories';
 }
 
@@ -64,4 +65,17 @@ class Currencies {
     };
     return map[code] ?? code;
   }
+}
+
+class AppConstants {
+  AppConstants._();
+
+  static const List<String> categories = [
+    'Развлечения',
+    'Музыка',
+    'Видео',
+    'Работа',
+    'Здоровье',
+    'Другое'
+  ];
 }
