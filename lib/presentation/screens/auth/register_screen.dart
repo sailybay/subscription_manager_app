@@ -177,13 +177,15 @@ class _RegisterScreenState extends State<RegisterScreen> {
     final password = _passwordController.text.trim();
     final confirm = _confirmPasswordController.text.trim();
 
-    if (email.isEmpty || password.isEmpty) {
-      AppUtils.showSnackBar(context, 'Заполните все поля', isError: true);
+    // Делегируем валидацию в AppUtils — логика не в UI
+    final emailError = AppUtils.validateEmail(email);
+    if (emailError != null) {
+      AppUtils.showSnackBar(context, emailError, isError: true);
       return;
     }
-    if (password.length < 6) {
-      AppUtils.showSnackBar(context, 'Пароль должен быть не менее 6 символов',
-          isError: true);
+    final passwordError = AppUtils.validatePassword(password);
+    if (passwordError != null) {
+      AppUtils.showSnackBar(context, passwordError, isError: true);
       return;
     }
     if (password != confirm) {

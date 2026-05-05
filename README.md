@@ -7,8 +7,7 @@
 ## 📸 Скриншоты
 
 <!-- Вставьте скриншоты сюда -->
-| Главный экран | Аналитика | Импорт из почты |
-|  | ![Analytics](screenshots/analytics.png) | ![Import](screenshots/import.png) |
+|
 
 ---
 
@@ -65,7 +64,7 @@ lib/
 
 **1. Клонируйте репозиторий**
 ```bash
-git clone https://github.com/ВАШ_USERNAME/subscription_manager_app.git
+git clone https://github.com/sailybayE/subscription_manager_app.git
 cd subscription_manager_app
 ```
 

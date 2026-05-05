@@ -2,9 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:fl_chart/fl_chart.dart';
 import '../../../core/theme/app_theme.dart';
-import '../../../core/constants/app_constants.dart';
 import '../../../core/extensions/context_extensions.dart';
 import '../../../core/utils/app_utils.dart';
+import '../../../core/utils/analytics_helper.dart';
 import '../../blocs/subscription/subscription_bloc.dart';
 import '../../blocs/subscription/subscription_state.dart';
 import '../../../domain/entities/subscription.dart';
@@ -54,24 +54,29 @@ class AnalyticsScreen extends StatelessWidget {
                 );
               }
 
+              // ──────────────────────────────────────────────────────────────
+              // Вся логика делегирована в AnalyticsHelper — экран только
+              // получает готовые данные и передает их в виджеты
+              // ──────────────────────────────────────────────────────────────
               final totalMonthly =
                   state is SubscriptionLoaded ? state.totalMonthlySpend : 0.0;
               final totalYearly = totalMonthly * 12;
 
-              // В реальном приложении здесь должен быть расчет на основе истории, пока используем заглушку
+              // Заглушка предыдущего месяца (в будущем — из истории БД)
               const prevMonthSpend = 12000.0;
-              final diff = totalMonthly - prevMonthSpend;
-              final diffPercent = prevMonthSpend > 0
-                  ? (diff / prevMonthSpend * 100).abs()
-                  : 0.0;
+              final (diffAmount, diffPercent) =
+                  AnalyticsHelper.calculateMonthlyDiff(
+                      totalMonthly, prevMonthSpend);
 
-              final categoryData = _calculateCategoryData(subscriptions);
-
-              // Находим самую затратную категорию для инсайта
-              final maxCategoryEntry = categoryData.entries.isNotEmpty
-                  ? categoryData.entries
-                      .reduce((a, b) => a.value > b.value ? a : b)
-                  : null;
+              final categoryData =
+                  AnalyticsHelper.calculateCategoryData(subscriptions);
+              final topCategory = AnalyticsHelper.getTopCategory(categoryData);
+              final trendLabel =
+                  AnalyticsHelper.formatTrendLabel(diffAmount, diffPercent);
+              final trendColor =
+                  diffAmount >= 0 ? Colors.redAccent : Colors.greenAccent;
+              final trendIcon =
+                  diffAmount >= 0 ? Icons.trending_up : Icons.trending_down;
 
               return SingleChildScrollView(
                 padding: const EdgeInsets.all(24.0),
@@ -82,12 +87,13 @@ class AnalyticsScreen extends StatelessWidget {
                     Row(
                       children: [
                         _buildSummaryCard(
-                            context,
-                            'Ежемесячно',
-                            AppUtils.formatCurrency(totalMonthly),
-                            diff >= 0 ? Icons.trending_up : Icons.trending_down,
-                            diff >= 0 ? Colors.redAccent : Colors.greenAccent,
-                            '${diff >= 0 ? '+' : '-'}${diffPercent.toStringAsFixed(1)}% к пр. мес.'),
+                          context,
+                          'Ежемесячно',
+                          AppUtils.formatCurrency(totalMonthly),
+                          trendIcon,
+                          trendColor,
+                          trendLabel,
+                        ),
                       ],
                     ),
                     const SizedBox(height: 24),
@@ -121,17 +127,17 @@ class AnalyticsScreen extends StatelessWidget {
                     ),
                     const SizedBox(height: 32),
 
-                    if (maxCategoryEntry != null) ...[
+                    if (topCategory != null) ...[
                       Text('Инсайты', style: context.titleMedium),
                       const SizedBox(height: 12),
-                      _buildInsightCard(context, maxCategoryEntry.key),
+                      _buildInsightCard(context, topCategory),
                       const SizedBox(height: 32),
                     ],
 
                     Text('По категориям', style: context.titleMedium),
                     const SizedBox(height: 24),
 
-                    // График
+                    // --- Диаграмма ---
                     SizedBox(
                       height: 200,
                       child: PieChart(
@@ -143,7 +149,8 @@ class AnalyticsScreen extends StatelessWidget {
                                 ? (entry.value / totalMonthly * 100)
                                 : 0;
                             return PieChartSectionData(
-                              color: _getCategoryColor(entry.key),
+                              color:
+                                  AnalyticsHelper.getCategoryColor(entry.key),
                               value: entry.value,
                               title: percentage > 5
                                   ? '${percentage.toStringAsFixed(0)}%'
@@ -160,11 +167,13 @@ class AnalyticsScreen extends StatelessWidget {
                     ),
                     const SizedBox(height: 32),
 
+                    // --- Список категорий ---
                     ...categoryData.entries.map((entry) => _buildCategoryItem(
-                        context,
-                        entry.key,
-                        entry.value,
-                        _getCategoryColor(entry.key))),
+                          context,
+                          entry.key,
+                          entry.value,
+                          AnalyticsHelper.getCategoryColor(entry.key),
+                        )),
                   ],
                 ),
               );
@@ -258,31 +267,6 @@ class AnalyticsScreen extends StatelessWidget {
                 fontWeight: isBold ? FontWeight.bold : FontWeight.normal)),
       ],
     );
-  }
-
-  Map<String, double> _calculateCategoryData(List<Subscription> subs) {
-    final Map<String, double> data = {};
-    for (var sub in subs) {
-      data[sub.category] = (data[sub.category] ?? 0) + sub.price;
-    }
-    return data;
-  }
-
-  Color _getCategoryColor(String category) {
-    final index = AppConstants.categories.indexOf(category);
-    if (index == -1) return Colors.grey;
-
-    // Генерация цветов на основе списка категорий
-    final colors = [
-      Colors.blueAccent,
-      Colors.greenAccent,
-      Colors.redAccent,
-      Colors.purpleAccent,
-      Colors.orangeAccent,
-      Colors.tealAccent,
-      Colors.pinkAccent,
-    ];
-    return colors[index % colors.length];
   }
 
   Widget _buildCategoryItem(

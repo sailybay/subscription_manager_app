@@ -1,14 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
-import 'package:path_provider/path_provider.dart';
-import 'package:share_plus/share_plus.dart';
-import 'package:path/path.dart' as p;
-import 'dart:io';
 import '../../../core/constants/app_constants.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/extensions/context_extensions.dart';
 import '../../../core/utils/app_utils.dart';
+import '../../../core/services/export_service.dart';
 import '../../blocs/auth/auth_bloc.dart';
 import '../../blocs/auth/auth_event.dart';
 import '../../blocs/auth/auth_state.dart';
@@ -209,53 +206,27 @@ class _SettingsScreenState extends State<SettingsScreen> {
     );
   }
 
+  // Вся файловая/sharing логика делегирована в ExportService.
+  // Экран отвечает только за отображение результата пользователю.
   Future<void> _exportData(BuildContext context) async {
     final subState = context.read<SubscriptionBloc>().state;
-    if (subState is SubscriptionLoaded) {
-      if (subState.allSubscriptions.isEmpty) {
+    if (subState is! SubscriptionLoaded) return;
+
+    final result =
+        await ExportService.exportSubscriptionsCsv(subState.allSubscriptions);
+
+    if (!context.mounted) return;
+
+    switch (result) {
+      case ExportSuccess():
+        AppUtils.showSnackBar(context, 'Файл успешно экспортирован');
+      case ExportSavedOnly(:final fileName):
+        AppUtils.showSnackBar(context, 'Файл сохранён: $fileName');
+      case ExportEmpty():
         AppUtils.showSnackBar(context, 'Нет данных для экспорта',
             isError: true);
-        return;
-      }
-
-      final csv = AppUtils.generateSubscriptionCsv(subState.allSubscriptions);
-
-      try {
-        Directory? directory;
-        if (Platform.isWindows) {
-          directory = await getApplicationDocumentsDirectory();
-        } else {
-          directory = await getTemporaryDirectory();
-        }
-
-        final fileName =
-            'subscriptions_export_${DateTime.now().millisecondsSinceEpoch}.csv';
-        final filePath = p.join(directory.path, fileName);
-
-        final file = File(filePath);
-        await file.writeAsString(csv);
-
-        if (!context.mounted) return;
-
-        try {
-          // Используем актуальный API share_plus
-          await SharePlus.instance.share(
-            ShareParams(
-              files: [XFile(filePath)],
-              subject: 'Экспорт подписок',
-            ),
-          );
-        } catch (_) {
-          if (!context.mounted) return;
-          // Копируем в буфер как запасной вариант
-          AppUtils.showSnackBar(context,
-              'Файл сохранен: $fileName. Перезапустите приложение для шаринга.');
-        }
-      } catch (e) {
-        if (!context.mounted) return;
-        AppUtils.showSnackBar(context, 'Ошибка экспорта: ${e.toString()}',
-            isError: true);
-      }
+      case ExportFailure(:final error):
+        AppUtils.showSnackBar(context, 'Ошибка: $error', isError: true);
     }
   }
 

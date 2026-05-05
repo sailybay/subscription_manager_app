@@ -117,19 +117,7 @@ class _LoginScreenState extends State<LoginScreen> {
                         return AppButton(
                           text: 'Войти',
                           isLoading: state is AuthLoading,
-                          onPressed: () {
-                            final email = _emailController.text.trim();
-                            final password = _passwordController.text.trim();
-                            if (email.isNotEmpty && password.isNotEmpty) {
-                              context
-                                  .read<AuthBloc>()
-                                  .add(AuthLoginRequested(email, password));
-                            } else {
-                              AppUtils.showSnackBar(
-                                  context, 'Заполните все поля',
-                                  isError: true);
-                            }
-                          },
+                          onPressed: () => _handleLogin(context),
                         );
                       },
                     ),
@@ -158,5 +146,23 @@ class _LoginScreenState extends State<LoginScreen> {
         ),
       ),
     );
+  }
+
+  void _handleLogin(BuildContext context) {
+    final email = _emailController.text.trim();
+    final password = _passwordController.text.trim();
+
+    // Делегируем валидацию в AppUtils — логика не в UI
+    final emailError = AppUtils.validateEmail(email);
+    if (emailError != null) {
+      AppUtils.showSnackBar(context, emailError, isError: true);
+      return;
+    }
+    if (password.isEmpty) {
+      AppUtils.showSnackBar(context, 'Введите пароль', isError: true);
+      return;
+    }
+
+    context.read<AuthBloc>().add(AuthLoginRequested(email, password));
   }
 }
