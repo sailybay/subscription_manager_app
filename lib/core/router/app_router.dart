@@ -1,10 +1,9 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import '../di/service_locator.dart';
 import '../../presentation/blocs/auth/auth_bloc.dart';
 import '../../presentation/blocs/auth/auth_state.dart';
-
 import '../../presentation/screens/auth/login_screen.dart';
 import '../../presentation/screens/auth/register_screen.dart';
 import '../../presentation/screens/home/home_screen.dart';
@@ -15,23 +14,38 @@ import '../../domain/entities/subscription.dart';
 class AppRouter {
   AppRouter._();
 
+  // Убираем splashPath, так как файла не существует. Стартовым сделаем логин.
   static const String loginPath = '/login';
   static const String registerPath = '/register';
-  static const String homePath = '/';
+  static const String homePath = '/home';
+  static const String addSubscriptionPath = '/subscription/add';
   static const String analyticsPath = '/analytics';
-  static const String addSubscriptionPath = '/add-subscription';
 
   static final GoRouter router = GoRouter(
-    initialLocation: homePath,
+    initialLocation: loginPath,
     refreshListenable: _RouterRefreshStream(sl<AuthBloc>().stream),
     redirect: (context, state) {
-      final authState = context.read<AuthBloc>().state;
-      final bool loggedIn = authState is Authenticated;
-      final bool loggingIn = state.matchedLocation == loginPath ||
+      final authState = sl<AuthBloc>().state;
+
+      // Проверяем, находимся ли мы на страницах входа/регистрации
+      final bool isLoggingIn = state.matchedLocation == loginPath ||
           state.matchedLocation == registerPath;
 
-      if (!loggedIn && !loggingIn) return loginPath;
-      if (loggedIn && loggingIn) return homePath;
+      // Если состояние еще начальное или идет загрузка — остаемся (или ждем)
+      if (authState is AuthInitial || authState is AuthLoading) {
+        return null; // GoRouter просто подождет следующего события
+      }
+
+      // Если НЕ авторизован и НЕ на странице логина — принудительно на логин
+      if (authState is! Authenticated) {
+        return isLoggingIn ? null : loginPath;
+      }
+
+      // Если АВТОРИЗОВАН и на странице логина — идем домой
+      if (isLoggingIn) {
+        return homePath;
+      }
+
       return null;
     },
     routes: [
@@ -48,27 +62,28 @@ class AppRouter {
         builder: (context, state) => const HomeScreen(),
       ),
       GoRoute(
-        path: analyticsPath,
-        builder: (context, state) => const AnalyticsScreen(),
-      ),
-      GoRoute(
         path: addSubscriptionPath,
         builder: (context, state) => AddSubscriptionScreen(
-          subscription: state.extra as Subscription?,
+          subscription:
+              state.extra is Subscription ? state.extra as Subscription : null,
         ),
+      ),
+      GoRoute(
+        path: analyticsPath,
+        builder: (context, state) => const AnalyticsScreen(),
       ),
     ],
   );
 }
 
-// Хелпер для прослушивания стрима Bloc в GoRouter
 class _RouterRefreshStream extends ChangeNotifier {
   _RouterRefreshStream(Stream<dynamic> stream) {
-    notifyListeners();
-    _subscription = stream.asBroadcastStream().listen((_) => notifyListeners());
+    _subscription = stream.asBroadcastStream().listen(
+          (dynamic _) => notifyListeners(),
+        );
   }
 
-  late final dynamic _subscription;
+  late final StreamSubscription<dynamic> _subscription;
 
   @override
   void dispose() {

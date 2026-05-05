@@ -36,8 +36,12 @@ class AnalyticsScreen extends StatelessWidget {
               final totalMonthly =
                   state is SubscriptionLoaded ? state.totalMonthlySpend : 0.0;
               final totalYearly = totalMonthly * 12;
-              final totalWeekly =
-                  totalMonthly / 4.345; // Среднее кол-во недель в месяце
+
+              // Для демонстрации сравнения представим, что в прошлом месяце траты были другими.
+              // В реальном приложении здесь должен быть запрос к истории транзакций.
+              const prevMonthSpend = 15000.0; // Заглушка для сравнения
+              final diff = totalMonthly - prevMonthSpend;
+              final diffPercent = (diff / prevMonthSpend * 100).abs();
 
               final categoryData = _calculateCategoryData(subscriptions);
               final maxCategory = categoryData.entries
@@ -49,62 +53,50 @@ class AnalyticsScreen extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // --- Блок прогнозов (Новый) ---
+                    // --- Сравнение с прошлым месяцем (Новое) ---
+                    Row(
+                      children: [
+                        _buildSummaryCard(
+                            context,
+                            'Всего в месяц',
+                            AppUtils.formatCurrency(totalMonthly),
+                            diff >= 0 ? Icons.trending_up : Icons.trending_down,
+                            diff >= 0 ? Colors.redAccent : Colors.greenAccent,
+                            '${diff >= 0 ? '+' : '-'}${diffPercent.toStringAsFixed(1)}% к пр. мес.'),
+                      ],
+                    ),
+                    const SizedBox(height: 24),
+
+                    // --- Блок прогнозов ---
                     Container(
                       padding: const EdgeInsets.all(24),
                       decoration: BoxDecoration(
-                        gradient: AppTheme.primaryGradient,
+                        color: AppTheme.surfaceColor,
                         borderRadius: BorderRadius.circular(32),
+                        border: Border.all(
+                            color: Colors.white.withValues(alpha: 0.05)),
                       ),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          const Text('Прогноз расходов',
-                              style: TextStyle(
-                                  color: Colors.white70, fontSize: 14)),
+                          Text('Прогноз', style: context.titleMedium),
                           const SizedBox(height: 16),
                           _buildForecastRow(
-                              'В неделю', AppUtils.formatCurrency(totalWeekly)),
-                          const Divider(color: Colors.white24, height: 24),
-                          _buildForecastRow(
                               'В месяц', AppUtils.formatCurrency(totalMonthly)),
-                          const Divider(color: Colors.white24, height: 24),
+                          const Divider(color: Colors.white10, height: 24),
                           _buildForecastRow(
-                              'В год', AppUtils.formatCurrency(totalYearly),
+                              'За год', AppUtils.formatCurrency(totalYearly),
                               isBold: true),
                         ],
                       ),
                     ),
                     const SizedBox(height: 32),
 
-                    // --- Секция "Умные советы" ---
                     Text('Инсайты', style: context.titleMedium),
                     const SizedBox(height: 12),
-                    Container(
-                      padding: const EdgeInsets.all(16),
-                      decoration: BoxDecoration(
-                        color: Colors.orangeAccent.withValues(alpha: 0.1),
-                        borderRadius: BorderRadius.circular(20),
-                        border: Border.all(
-                            color: Colors.orangeAccent.withValues(alpha: 0.3)),
-                      ),
-                      child: Row(
-                        children: [
-                          const Icon(Icons.lightbulb_outline,
-                              color: Colors.orangeAccent),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: Text(
-                              'Ваша самая затратная категория — "$maxCategory". Подумайте, все ли эти подписки вам полезны.',
-                              style: context.bodyMedium?.copyWith(
-                                  fontSize: 13, color: Colors.orangeAccent),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(height: 32),
+                    _buildInsightCard(context, maxCategory),
 
+                    const SizedBox(height: 32),
                     Text('Траты по категориям', style: context.titleMedium),
                     const SizedBox(height: 24),
 
@@ -131,10 +123,8 @@ class AnalyticsScreen extends StatelessWidget {
                         ),
                       ),
                     ),
-                    const SizedBox(height: 48),
+                    const SizedBox(height: 32),
 
-                    Text('Детализация', style: context.titleMedium),
-                    const SizedBox(height: 16),
                     ...categoryData.entries.map((entry) => _buildCategoryItem(
                         context,
                         entry.key,
@@ -150,20 +140,82 @@ class AnalyticsScreen extends StatelessWidget {
     );
   }
 
+  Widget _buildSummaryCard(BuildContext context, String title, String value,
+      IconData icon, Color color, String subtitle) {
+    return Expanded(
+      child: Container(
+        padding: const EdgeInsets.all(24),
+        decoration: BoxDecoration(
+          color: AppTheme.cardColor,
+          borderRadius: BorderRadius.circular(28),
+          border: Border.all(color: color.withValues(alpha: 0.2)),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(title,
+                    style: const TextStyle(
+                        color: AppTheme.textSecondary, fontSize: 14)),
+                Icon(icon, color: color, size: 20),
+              ],
+            ),
+            const SizedBox(height: 8),
+            Text(value,
+                style: const TextStyle(
+                    color: AppTheme.textPrimary,
+                    fontSize: 28,
+                    fontWeight: FontWeight.bold)),
+            const SizedBox(height: 8),
+            Text(subtitle,
+                style: TextStyle(
+                    color: color, fontSize: 12, fontWeight: FontWeight.w500)),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildInsightCard(BuildContext context, String category) {
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: Colors.blueAccent.withValues(alpha: 0.1),
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(color: Colors.blueAccent.withValues(alpha: 0.2)),
+      ),
+      child: Row(
+        children: [
+          const CircleAvatar(
+            backgroundColor: Colors.blueAccent,
+            child: Icon(Icons.auto_awesome, color: Colors.white, size: 20),
+          ),
+          const SizedBox(width: 16),
+          Expanded(
+            child: Text(
+              'Вы активный потребитель в категории "$category". Проверьте, не дублируют ли подписки друг друга?',
+              style: context.bodyMedium?.copyWith(fontSize: 13),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _buildForecastRow(String label, String value, {bool isBold = false}) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
         Text(label,
-            style: const TextStyle(color: Colors.white70, fontSize: 13)),
-        Text(
-          value,
-          style: TextStyle(
-            color: Colors.white,
-            fontSize: isBold ? 20 : 16,
-            fontWeight: isBold ? FontWeight.bold : FontWeight.normal,
-          ),
-        ),
+            style:
+                const TextStyle(color: AppTheme.textSecondary, fontSize: 14)),
+        Text(value,
+            style: TextStyle(
+                color: AppTheme.textPrimary,
+                fontSize: isBold ? 18 : 16,
+                fontWeight: isBold ? FontWeight.bold : FontWeight.normal)),
       ],
     );
   }
