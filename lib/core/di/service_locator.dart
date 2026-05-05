@@ -7,6 +7,7 @@ import '../../domain/repositories/auth_repository.dart';
 import '../../data/repositories/auth_repository_impl.dart';
 import '../../presentation/blocs/subscription/subscription_bloc.dart';
 import '../../presentation/blocs/auth/auth_bloc.dart';
+import '../../presentation/blocs/theme/theme_bloc.dart';
 import '../services/notification_service.dart';
 
 final sl = GetIt.instance;
@@ -35,6 +36,7 @@ Future<void> initServiceLocator() async {
 
   // --- Blocs ---
   sl.registerLazySingleton(() => AuthBloc(sl<AuthRepository>()));
+  sl.registerLazySingleton(() => ThemeBloc(sl<SharedPreferences>()));
   sl.registerLazySingleton(() => SubscriptionBloc(
       sl<SubscriptionRepository>(), sl<NotificationService>()));
 }

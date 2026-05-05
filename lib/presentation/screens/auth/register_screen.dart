@@ -21,6 +21,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
+  bool _obscurePassword = true;
+  bool _obscureConfirm = true;
 
   @override
   void dispose() {
@@ -43,15 +45,21 @@ class _RegisterScreenState extends State<RegisterScreen> {
           backgroundColor: Colors.transparent,
           elevation: 0,
           leading: IconButton(
-            icon: const Icon(Icons.arrow_back_ios_new,
-                color: AppTheme.textPrimary, size: 20),
+            icon: Icon(Icons.arrow_back_ios_new,
+                color: Theme.of(context).iconTheme.color, size: 20),
             onPressed: () => context.go(AppRoutes.login),
           ),
         ),
         extendBodyBehindAppBar: true,
         body: Container(
-          decoration:
-              const BoxDecoration(gradient: AppTheme.backgroundGradient),
+          decoration: BoxDecoration(
+            gradient: Theme.of(context).brightness == Brightness.dark
+                ? AppTheme.backgroundGradient
+                : null,
+            color: Theme.of(context).brightness == Brightness.light
+                ? AppTheme.backgroundLight
+                : null,
+          ),
           child: SafeArea(
             child: SingleChildScrollView(
               padding: const EdgeInsets.symmetric(horizontal: 32.0),
@@ -59,21 +67,22 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 children: [
                   const SizedBox(height: 40),
                   const Icon(Icons.person_add_outlined,
-                      size: 80, color: Colors.blueAccent),
+                      size: 80, color: AppTheme.primaryColor),
                   const SizedBox(height: 32),
-                  const Text(
+                  Text(
                     'Создать аккаунт',
                     style: TextStyle(
-                        color: AppTheme.textPrimary,
+                        color: Theme.of(context).textTheme.displayLarge?.color,
                         fontSize: 28,
                         fontWeight: FontWeight.bold),
                   ),
                   const SizedBox(height: 8),
-                  const Text(
+                  Text(
                     'Начните управлять подписками сегодня',
                     textAlign: TextAlign.center,
-                    style:
-                        TextStyle(color: AppTheme.textSecondary, fontSize: 16),
+                    style: TextStyle(
+                        color: Theme.of(context).textTheme.bodyMedium?.color,
+                        fontSize: 16),
                   ),
                   const SizedBox(height: 48),
                   AppTextField(
@@ -87,14 +96,42 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     controller: _passwordController,
                     hintText: 'Пароль',
                     prefixIcon: Icons.lock_outline,
-                    obscureText: true,
+                    obscureText: _obscurePassword,
+                    suffixIcon: IconButton(
+                      icon: Icon(
+                        _obscurePassword
+                            ? Icons.visibility_off_outlined
+                            : Icons.visibility_outlined,
+                        color: AppTheme.textHint,
+                        size: 20,
+                      ),
+                      onPressed: () {
+                        setState(() {
+                          _obscurePassword = !_obscurePassword;
+                        });
+                      },
+                    ),
                   ),
                   const SizedBox(height: 16),
                   AppTextField(
                     controller: _confirmPasswordController,
                     hintText: 'Повторите пароль',
                     prefixIcon: Icons.lock_reset_outlined,
-                    obscureText: true,
+                    obscureText: _obscureConfirm,
+                    suffixIcon: IconButton(
+                      icon: Icon(
+                        _obscureConfirm
+                            ? Icons.visibility_off_outlined
+                            : Icons.visibility_outlined,
+                        color: AppTheme.textHint,
+                        size: 20,
+                      ),
+                      onPressed: () {
+                        setState(() {
+                          _obscureConfirm = !_obscureConfirm;
+                        });
+                      },
+                    ),
                   ),
                   const SizedBox(height: 40),
                   BlocBuilder<AuthBloc, AuthState>(
@@ -112,8 +149,13 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      const Text('Уже есть аккаунт?',
-                          style: TextStyle(color: AppTheme.textSecondary)),
+                      Text('Уже есть аккаунт?',
+                          style: TextStyle(
+                              color: Theme.of(context)
+                                  .textTheme
+                                  .bodyMedium
+                                  ?.color)),
+                      const SizedBox(width: 4),
                       TextButton(
                         onPressed: () => context.go(AppRoutes.login),
                         child: const Text('Войти'),

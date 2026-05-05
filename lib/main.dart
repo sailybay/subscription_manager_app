@@ -8,6 +8,8 @@ import 'presentation/blocs/auth/auth_bloc.dart';
 import 'presentation/blocs/auth/auth_event.dart';
 import 'presentation/blocs/subscription/subscription_bloc.dart';
 import 'presentation/blocs/subscription/subscription_event.dart';
+import 'presentation/blocs/theme/theme_bloc.dart';
+import 'presentation/blocs/theme/theme_state.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -32,15 +34,24 @@ class MyApp extends StatelessWidget {
           create: (context) => sl<AuthBloc>()..add(AuthCheckRequested()),
         ),
         BlocProvider(
+          create: (context) => sl<ThemeBloc>(),
+        ),
+        BlocProvider(
           create: (context) =>
               sl<SubscriptionBloc>()..add(SubscriptionSubscriptionRequested()),
         ),
       ],
-      child: MaterialApp.router(
-        title: 'Subscription Manager',
-        debugShowCheckedModeBanner: false,
-        theme: AppTheme.darkTheme,
-        routerConfig: AppRouter.router,
+      child: BlocBuilder<ThemeBloc, ThemeState>(
+        builder: (context, themeState) {
+          return MaterialApp.router(
+            title: 'Subscription Manager',
+            debugShowCheckedModeBanner: false,
+            theme: AppTheme.lightTheme,
+            darkTheme: AppTheme.darkTheme,
+            themeMode: themeState.themeMode,
+            routerConfig: AppRouter.router,
+          );
+        },
       ),
     );
   }

@@ -38,6 +38,91 @@ class AppTheme {
     end: Alignment.bottomCenter,
   );
 
+  // --- Базовая палитра (Light) ---
+  static const Color primaryColorLight = Color(0xFF6C63FF);
+  static const Color backgroundLight = Color(0xFFF8F9FE);
+  static const Color surfaceLight = Color(0xFFFFFFFF);
+  static const Color textPrimaryLight = Color(0xFF1A1A2E);
+  static const Color textSecondaryLight = Color(0xFF6E6E82);
+
+  /// Конфигурация светлой темы
+  static ThemeData get lightTheme {
+    return ThemeData(
+      useMaterial3: true,
+      brightness: Brightness.light,
+      colorScheme: const ColorScheme.light(
+        primary: primaryColorLight,
+        secondary: Color(0xFF00BFA5),
+        surface: surfaceLight,
+        error: errorColor,
+        onPrimary: Colors.white,
+        onSurface: textPrimaryLight,
+      ),
+      scaffoldBackgroundColor: backgroundLight,
+
+      // Типографика
+      textTheme: GoogleFonts.interTextTheme(const TextTheme(
+        displayLarge: TextStyle(
+            fontSize: 32, fontWeight: FontWeight.bold, color: textPrimaryLight),
+        headlineMedium: TextStyle(
+            fontSize: 20, fontWeight: FontWeight.w600, color: textPrimaryLight),
+        titleMedium: TextStyle(
+            fontSize: 16, fontWeight: FontWeight.w500, color: textPrimaryLight),
+        bodyMedium: TextStyle(fontSize: 14, color: textSecondaryLight),
+      )),
+
+      // AppBar стиль
+      appBarTheme: const AppBarTheme(
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        centerTitle: false,
+        titleTextStyle: TextStyle(
+            fontSize: 20, fontWeight: FontWeight.bold, color: textPrimaryLight),
+        iconTheme: IconThemeData(color: textPrimaryLight),
+      ),
+
+      // Карточки
+      cardTheme: CardThemeData(
+        color: surfaceLight,
+        shadowColor: Colors.black.withValues(alpha: 0.05),
+        elevation: 4,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      ),
+
+      // Поля ввода (Inputs)
+      inputDecorationTheme: InputDecorationTheme(
+        filled: true,
+        fillColor: Colors.white,
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(16),
+          borderSide: const BorderSide(color: Color(0xFFE0E0E0)),
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(16),
+          borderSide: const BorderSide(color: Color(0xFFE0E0E0)),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(16),
+          borderSide: const BorderSide(color: primaryColorLight, width: 2),
+        ),
+        contentPadding: const EdgeInsets.all(20),
+      ),
+
+      // Кнопки
+      elevatedButtonTheme: ElevatedButtonThemeData(
+        style: ElevatedButton.styleFrom(
+          backgroundColor: primaryColorLight,
+          foregroundColor: Colors.white,
+          minimumSize: const Size(double.infinity, 56),
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          textStyle: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+        ),
+      ),
+    );
+  }
+
   /// Конфигурация темной темы
   static ThemeData get darkTheme {
     return ThemeData(

@@ -40,6 +40,7 @@ class SessionKeys {
   static const String isLoggedIn = 'is_logged_in';
   static const String currentUserId = 'current_user_id';
   static const String currentUserEmail = 'current_user_email';
+  static const String isDarkMode = 'is_dark_mode';
 }
 
 // ─────────────────────────────────────────────────────────────────────────────

@@ -26,7 +26,14 @@ class HomeScreen extends StatelessWidget {
         ],
       ),
       body: Container(
-        decoration: const BoxDecoration(gradient: AppTheme.backgroundGradient),
+        decoration: BoxDecoration(
+          gradient: Theme.of(context).brightness == Brightness.dark
+              ? AppTheme.backgroundGradient
+              : null,
+          color: Theme.of(context).brightness == Brightness.light
+              ? AppTheme.backgroundLight
+              : null,
+        ),
         child: BlocBuilder<SubscriptionBloc, SubscriptionState>(
           builder: (context, state) {
             if (state is SubscriptionLoading) {
@@ -88,10 +95,12 @@ class HomeScreen extends StatelessWidget {
             Text('Ваш список пуст',
                 style: context.displayMedium?.copyWith(fontSize: 24)),
             const SizedBox(height: 12),
-            const Text(
+            Text(
               'Добавьте свою первую подписку, чтобы начать контролировать расходы',
               textAlign: TextAlign.center,
-              style: TextStyle(color: AppTheme.textSecondary, fontSize: 16),
+              style: TextStyle(
+                  color: context.colors.onSurface.withValues(alpha: 0.6),
+                  fontSize: 16),
             ),
             const SizedBox(height: 48),
             SizedBox(
@@ -116,14 +125,15 @@ class HomeScreen extends StatelessWidget {
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text('Всего в месяц',
-                  style:
-                      TextStyle(color: AppTheme.textSecondary, fontSize: 14)),
+              Text('Всего в месяц',
+                  style: TextStyle(
+                      color: context.colors.onSurface.withValues(alpha: 0.6),
+                      fontSize: 14)),
               const SizedBox(height: 4),
               Text(
                 '${state.totalMonthlySpend.toStringAsFixed(0)}₽',
-                style: const TextStyle(
-                    color: AppTheme.textPrimary,
+                style: TextStyle(
+                    color: context.colors.onSurface,
                     fontSize: 32,
                     fontWeight: FontWeight.bold),
               ),
@@ -133,7 +143,7 @@ class HomeScreen extends StatelessWidget {
             onTap: () => context.push(AppRoutes.analytics),
             child: CircleAvatar(
               radius: 24,
-              backgroundColor: AppTheme.surfaceColor,
+              backgroundColor: Theme.of(context).cardColor,
               child:
                   Icon(Icons.analytics_outlined, color: context.colors.primary),
             ),
@@ -154,7 +164,8 @@ class HomeScreen extends StatelessWidget {
                 .read<SubscriptionBloc>()
                 .add(SubscriptionSearchQueryChanged(val)),
             decoration: AppTheme.inputDecoration('Поиск подписок').copyWith(
-              prefixIcon: const Icon(Icons.search, color: AppTheme.textHint),
+              prefixIcon: Icon(Icons.search,
+                  color: context.colors.onSurface.withValues(alpha: 0.4)),
             ),
           ),
           const SizedBox(height: 16),
@@ -195,21 +206,23 @@ class HomeScreen extends StatelessWidget {
         onSelected: (_) => onTap(),
         selectedColor: context.colors.primary.withValues(alpha: 0.2),
         labelStyle: TextStyle(
-            color:
-                isSelected ? context.colors.primary : AppTheme.textSecondary),
+            color: isSelected
+                ? context.colors.primary
+                : context.colors.onSurface.withValues(alpha: 0.6)),
       ),
     );
   }
 
   Widget _buildSearchEmptyState() {
-    return const Center(
+    return Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(Icons.search_off, size: 64, color: AppTheme.textHint),
-          SizedBox(height: 16),
+          const Icon(Icons.search_off, size: 64, color: AppTheme.textHint),
+          const SizedBox(height: 16),
           Text('Ничего не найдено',
-              style: TextStyle(color: AppTheme.textSecondary)),
+              style:
+                  TextStyle(color: AppTheme.textHint.withValues(alpha: 0.8))),
         ],
       ),
     );

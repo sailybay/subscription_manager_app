@@ -10,6 +10,9 @@ import '../../blocs/auth/auth_state.dart';
 import '../../blocs/subscription/subscription_bloc.dart';
 import '../../blocs/subscription/subscription_event.dart';
 import '../../blocs/subscription/subscription_state.dart';
+import '../../blocs/theme/theme_bloc.dart';
+import '../../blocs/theme/theme_event.dart';
+import '../../blocs/theme/theme_state.dart';
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
@@ -20,14 +23,20 @@ class SettingsScreen extends StatefulWidget {
 
 class _SettingsScreenState extends State<SettingsScreen> {
   bool _notificationsEnabled = true;
-  bool _darkMode = true;
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: const Text('Настройки')),
       body: Container(
-        decoration: const BoxDecoration(gradient: AppTheme.backgroundGradient),
+        decoration: BoxDecoration(
+          gradient: Theme.of(context).brightness == Brightness.dark
+              ? AppTheme.backgroundGradient
+              : null,
+          color: Theme.of(context).brightness == Brightness.light
+              ? AppTheme.backgroundLight
+              : null,
+        ),
         child: BlocBuilder<AuthBloc, AuthState>(
           builder: (context, authState) {
             final userEmail = authState is Authenticated
@@ -41,7 +50,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 Container(
                   padding: const EdgeInsets.all(20),
                   decoration: BoxDecoration(
-                    color: AppTheme.surfaceColor,
+                    color: Theme.of(context).cardColor,
                     borderRadius: BorderRadius.circular(24),
                     border:
                         Border.all(color: Colors.white.withValues(alpha: 0.05)),
@@ -62,8 +71,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
                           children: [
                             Text('Мой профиль', style: context.titleMedium),
                             Text(userEmail,
-                                style: const TextStyle(
-                                    color: AppTheme.textSecondary,
+                                style: TextStyle(
+                                    color: context.colors.onSurface
+                                        .withValues(alpha: 0.6),
                                     fontSize: 13)),
                           ],
                         ),
@@ -98,10 +108,16 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   icon: Icons.dark_mode_outlined,
                   title: 'Темная тема',
                   subtitle: 'Использовать темную палитру',
-                  trailing: Switch(
-                    value: _darkMode,
-                    onChanged: (val) => setState(() => _darkMode = val),
-                    activeThumbColor: context.colors.primary,
+                  trailing: BlocBuilder<ThemeBloc, ThemeState>(
+                    builder: (context, state) {
+                      return Switch(
+                        value: state.themeMode == ThemeMode.dark,
+                        onChanged: (val) {
+                          context.read<ThemeBloc>().add(ThemeChanged(val));
+                        },
+                        activeThumbColor: context.colors.primary,
+                      );
+                    },
                   ),
                 ),
 
@@ -146,12 +162,15 @@ class _SettingsScreenState extends State<SettingsScreen> {
       child: Container(
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: AppTheme.cardColor.withValues(alpha: 0.5),
+          color: Theme.of(context).cardColor,
           borderRadius: BorderRadius.circular(20),
         ),
         child: Row(
           children: [
-            Icon(icon, color: titleColor ?? AppTheme.textSecondary, size: 22),
+            Icon(icon,
+                color: titleColor ??
+                    context.colors.onSurface.withValues(alpha: 0.7),
+                size: 22),
             const SizedBox(width: 16),
             Expanded(
               child: Column(
@@ -159,11 +178,13 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 children: [
                   Text(title,
                       style: TextStyle(
-                          color: titleColor ?? AppTheme.textPrimary,
+                          color: titleColor ?? context.colors.onSurface,
                           fontWeight: FontWeight.w600)),
                   Text(subtitle,
-                      style: const TextStyle(
-                          color: AppTheme.textHint, fontSize: 12)),
+                      style: TextStyle(
+                          color:
+                              context.colors.onSurface.withValues(alpha: 0.5),
+                          fontSize: 12)),
                 ],
               ),
             ),
@@ -189,7 +210,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
       builder: (ctx) => AlertDialog(
         title: const Text('Очистить все данные?'),
         content: const Text(
-            'Это удалит все ваши подписки и уведомления. Это действие необратимо.'),
+            'Это удалить все ваши подписки и уведомления. Это действие необратимо.'),
         actions: [
           TextButton(
               onPressed: () => context.pop(), child: const Text('Отмена')),

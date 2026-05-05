@@ -17,7 +17,14 @@ class AnalyticsScreen extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(title: const Text('Аналитика')),
       body: Container(
-        decoration: const BoxDecoration(gradient: AppTheme.backgroundGradient),
+        decoration: BoxDecoration(
+          gradient: Theme.of(context).brightness == Brightness.dark
+              ? AppTheme.backgroundGradient
+              : null,
+          color: Theme.of(context).brightness == Brightness.light
+              ? AppTheme.backgroundLight
+              : null,
+        ),
         child: SafeArea(
           child: BlocBuilder<SubscriptionBloc, SubscriptionState>(
             builder: (context, state) {
@@ -38,8 +45,10 @@ class AnalyticsScreen extends StatelessWidget {
                           size: 64,
                           color: context.colors.primary.withValues(alpha: 0.2)),
                       const SizedBox(height: 16),
-                      const Text('Добавьте подписки для анализа',
-                          style: TextStyle(color: AppTheme.textSecondary)),
+                      Text('Добавьте подписки для анализа',
+                          style: TextStyle(
+                              color: context.colors.onSurface
+                                  .withValues(alpha: 0.6))),
                     ],
                   ),
                 );
@@ -87,21 +96,25 @@ class AnalyticsScreen extends StatelessWidget {
                     Container(
                       padding: const EdgeInsets.all(24),
                       decoration: BoxDecoration(
-                        color: AppTheme.surfaceColor,
+                        color: Theme.of(context).cardColor,
                         borderRadius: BorderRadius.circular(28),
                         border: Border.all(
-                            color: Colors.white.withValues(alpha: 0.05)),
+                            color: context.colors.onSurface
+                                .withValues(alpha: 0.05)),
                       ),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text('Прогноз расходов', style: context.titleMedium),
                           const SizedBox(height: 16),
-                          _buildForecastRow('За полгода',
+                          _buildForecastRow(context, 'За полгода',
                               AppUtils.formatCurrency(totalMonthly * 6)),
-                          const Divider(color: Colors.white10, height: 24),
-                          _buildForecastRow(
-                              'За год', AppUtils.formatCurrency(totalYearly),
+                          Divider(
+                              color: context.colors.onSurface
+                                  .withValues(alpha: 0.1),
+                              height: 24),
+                          _buildForecastRow(context, 'За год',
+                              AppUtils.formatCurrency(totalYearly),
                               isBold: true),
                         ],
                       ),
@@ -168,7 +181,7 @@ class AnalyticsScreen extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.all(24),
         decoration: BoxDecoration(
-          color: AppTheme.cardColor,
+          color: Theme.of(context).cardColor,
           borderRadius: BorderRadius.circular(28),
           border: Border.all(color: color.withValues(alpha: 0.2)),
         ),
@@ -179,15 +192,16 @@ class AnalyticsScreen extends StatelessWidget {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Text(title,
-                    style: const TextStyle(
-                        color: AppTheme.textSecondary, fontSize: 14)),
+                    style: TextStyle(
+                        color: context.colors.onSurface.withValues(alpha: 0.6),
+                        fontSize: 14)),
                 Icon(icon, color: color, size: 22),
               ],
             ),
             const SizedBox(height: 12),
             Text(value,
-                style: const TextStyle(
-                    color: AppTheme.textPrimary,
+                style: TextStyle(
+                    color: context.colors.onSurface,
                     fontSize: 32,
                     fontWeight: FontWeight.bold)),
             const SizedBox(height: 8),
@@ -228,16 +242,18 @@ class AnalyticsScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildForecastRow(String label, String value, {bool isBold = false}) {
+  Widget _buildForecastRow(BuildContext context, String label, String value,
+      {bool isBold = false}) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
         Text(label,
-            style:
-                const TextStyle(color: AppTheme.textSecondary, fontSize: 14)),
+            style: TextStyle(
+                color: context.colors.onSurface.withValues(alpha: 0.6),
+                fontSize: 14)),
         Text(value,
             style: TextStyle(
-                color: AppTheme.textPrimary,
+                color: context.colors.onSurface,
                 fontSize: isBold ? 18 : 16,
                 fontWeight: isBold ? FontWeight.bold : FontWeight.normal)),
       ],
@@ -275,7 +291,7 @@ class AnalyticsScreen extends StatelessWidget {
       margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-          color: AppTheme.cardColor.withValues(alpha: 0.5),
+          color: Theme.of(context).cardColor.withValues(alpha: 0.5),
           borderRadius: BorderRadius.circular(16)),
       child: Row(
         children: [
@@ -287,8 +303,9 @@ class AnalyticsScreen extends StatelessWidget {
           Text(name, style: context.bodyMedium),
           const Spacer(),
           Text(AppUtils.formatCurrency(amount),
-              style: const TextStyle(
-                  fontWeight: FontWeight.bold, color: AppTheme.textPrimary)),
+              style: TextStyle(
+                  fontWeight: FontWeight.bold,
+                  color: context.colors.onSurface)),
         ],
       ),
     );
