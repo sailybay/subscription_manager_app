@@ -11,18 +11,22 @@ import '../../presentation/screens/home/home_screen.dart';
 import '../../presentation/screens/subscription/add_subscription_screen.dart';
 import '../../presentation/screens/analytics/analytics_screen.dart';
 import '../../presentation/screens/settings/settings_screen.dart';
+import '../../presentation/screens/splash/splash_screen.dart';
 import '../../domain/entities/subscription.dart';
 
 class AppRouter {
   AppRouter._();
 
   static final GoRouter router = GoRouter(
-    initialLocation: AppRoutes.login,
+    initialLocation: AppRoutes.splash,
     refreshListenable: _RouterRefreshStream(sl<AuthBloc>().stream),
     redirect: (context, state) {
       final authState = sl<AuthBloc>().state;
       final bool isLoggingIn = state.matchedLocation == AppRoutes.login ||
           state.matchedLocation == AppRoutes.register;
+
+      // Не делаем редиректы со сплеша, он сам решит куда идти
+      if (state.matchedLocation == AppRoutes.splash) return null;
 
       if (authState is AuthInitial || authState is AuthLoading) {
         return null;
@@ -39,6 +43,10 @@ class AppRouter {
       return null;
     },
     routes: [
+      GoRoute(
+        path: AppRoutes.splash,
+        builder: (context, state) => const SplashScreen(),
+      ),
       GoRoute(
         path: AppRoutes.login,
         builder: (context, state) => const LoginScreen(),

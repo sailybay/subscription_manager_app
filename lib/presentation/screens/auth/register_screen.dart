@@ -1,10 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:go_router/go_router.dart';
 import '../../../core/theme/app_theme.dart';
+import '../../../core/constants/app_constants.dart';
 import '../../../core/utils/app_utils.dart';
 import '../../blocs/auth/auth_bloc.dart';
 import '../../blocs/auth/auth_event.dart';
 import '../../blocs/auth/auth_state.dart';
+import '../../widgets/common/app_button.dart';
+import '../../widgets/common/app_text_field.dart';
 
 class RegisterScreen extends StatefulWidget {
   const RegisterScreen({super.key});
@@ -14,7 +18,6 @@ class RegisterScreen extends StatefulWidget {
 }
 
 class _RegisterScreenState extends State<RegisterScreen> {
-  final _formKey = GlobalKey<FormState>();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
@@ -27,90 +30,125 @@ class _RegisterScreenState extends State<RegisterScreen> {
     super.dispose();
   }
 
-  void _onRegister() {
-    if (_formKey.currentState!.validate()) {
-      if (_passwordController.text != _confirmPasswordController.text) {
-        AppUtils.showSnackBar(context, 'Пароли не совпадают', isError: true);
-        return;
-      }
-      context.read<AuthBloc>().add(
-            AuthLoginRequested(
-              // Используем Login для упрощения регистрации в моке
-              _emailController.text.trim(),
-              _passwordController.text.trim(),
-            ),
-          );
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(leading: const BackButton(color: AppTheme.textPrimary)),
-      body: BlocListener<AuthBloc, AuthState>(
-        listener: (context, state) {
-          if (state is AuthError) {
-            AppUtils.showSnackBar(context, state.message, isError: true);
-          }
-        },
-        child: Container(
+    return BlocListener<AuthBloc, AuthState>(
+      listener: (context, state) {
+        if (state is AuthError) {
+          AppUtils.showSnackBar(context, state.message, isError: true);
+        }
+      },
+      child: Scaffold(
+        appBar: AppBar(
+          backgroundColor: Colors.transparent,
+          elevation: 0,
+          leading: IconButton(
+            icon: const Icon(Icons.arrow_back_ios_new,
+                color: AppTheme.textPrimary, size: 20),
+            onPressed: () => context.go(AppRoutes.login),
+          ),
+        ),
+        extendBodyBehindAppBar: true,
+        body: Container(
           decoration:
               const BoxDecoration(gradient: AppTheme.backgroundGradient),
           child: SafeArea(
             child: SingleChildScrollView(
-              padding: const EdgeInsets.all(24.0),
-              child: Form(
-                key: _formKey,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text('Регистрация',
-                        style: Theme.of(context).textTheme.displayLarge),
-                    const SizedBox(height: 8),
-                    Text('Создайте аккаунт и начните экономить',
-                        style: Theme.of(context).textTheme.bodyMedium),
-                    const SizedBox(height: 48),
-                    TextFormField(
-                      controller: _emailController,
-                      decoration: const InputDecoration(hintText: 'Email'),
-                      validator: AppUtils.validateEmail,
-                      keyboardType: TextInputType.emailAddress,
-                    ),
-                    const SizedBox(height: 16),
-                    TextFormField(
-                      controller: _passwordController,
-                      decoration: const InputDecoration(hintText: 'Пароль'),
-                      obscureText: true,
-                      validator: AppUtils.validatePassword,
-                    ),
-                    const SizedBox(height: 16),
-                    TextFormField(
-                      controller: _confirmPasswordController,
-                      decoration:
-                          const InputDecoration(hintText: 'Повторите пароль'),
-                      obscureText: true,
-                      validator: (v) =>
-                          v!.isEmpty ? 'Подтвердите пароль' : null,
-                    ),
-                    const SizedBox(height: 32),
-                    BlocBuilder<AuthBloc, AuthState>(
-                      builder: (context, state) {
-                        return ElevatedButton(
-                          onPressed: state is AuthLoading ? null : _onRegister,
-                          child: state is AuthLoading
-                              ? const CircularProgressIndicator(
-                                  color: Colors.white)
-                              : const Text('Создать аккаунт'),
-                        );
-                      },
-                    ),
-                  ],
-                ),
+              padding: const EdgeInsets.symmetric(horizontal: 32.0),
+              child: Column(
+                children: [
+                  const SizedBox(height: 40),
+                  const Icon(Icons.person_add_outlined,
+                      size: 80, color: Colors.blueAccent),
+                  const SizedBox(height: 32),
+                  const Text(
+                    'Создать аккаунт',
+                    style: TextStyle(
+                        color: AppTheme.textPrimary,
+                        fontSize: 28,
+                        fontWeight: FontWeight.bold),
+                  ),
+                  const SizedBox(height: 8),
+                  const Text(
+                    'Начните управлять подписками сегодня',
+                    textAlign: TextAlign.center,
+                    style:
+                        TextStyle(color: AppTheme.textSecondary, fontSize: 16),
+                  ),
+                  const SizedBox(height: 48),
+                  AppTextField(
+                    controller: _emailController,
+                    hintText: 'Email',
+                    prefixIcon: Icons.email_outlined,
+                    keyboardType: TextInputType.emailAddress,
+                  ),
+                  const SizedBox(height: 16),
+                  AppTextField(
+                    controller: _passwordController,
+                    hintText: 'Пароль',
+                    prefixIcon: Icons.lock_outline,
+                    obscureText: true,
+                  ),
+                  const SizedBox(height: 16),
+                  AppTextField(
+                    controller: _confirmPasswordController,
+                    hintText: 'Повторите пароль',
+                    prefixIcon: Icons.lock_reset_outlined,
+                    obscureText: true,
+                  ),
+                  const SizedBox(height: 40),
+                  BlocBuilder<AuthBloc, AuthState>(
+                    builder: (context, state) {
+                      return AppButton(
+                        text: 'Зарегистрироваться',
+                        isLoading: state is AuthLoading,
+                        onPressed: () {
+                          _handleRegister(context);
+                        },
+                      );
+                    },
+                  ),
+                  const SizedBox(height: 24),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      const Text('Уже есть аккаунт?',
+                          style: TextStyle(color: AppTheme.textSecondary)),
+                      TextButton(
+                        onPressed: () => context.go(AppRoutes.login),
+                        child: const Text('Войти'),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 20),
+                ],
               ),
             ),
           ),
         ),
       ),
     );
+  }
+
+  void _handleRegister(BuildContext context) {
+    final email = _emailController.text.trim();
+    final password = _passwordController.text.trim();
+    final confirm = _confirmPasswordController.text.trim();
+
+    if (email.isEmpty || password.isEmpty) {
+      AppUtils.showSnackBar(context, 'Заполните все поля', isError: true);
+      return;
+    }
+    if (password.length < 6) {
+      AppUtils.showSnackBar(context, 'Пароль должен быть не менее 6 символов',
+          isError: true);
+      return;
+    }
+    if (password != confirm) {
+      AppUtils.showSnackBar(context, 'Пароли не совпадают', isError: true);
+      return;
+    }
+
+    context.read<AuthBloc>().add(AuthRegisterRequested(email, password));
   }
 }

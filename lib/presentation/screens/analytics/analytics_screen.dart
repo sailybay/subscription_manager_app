@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:fl_chart/fl_chart.dart';
 import '../../../core/theme/app_theme.dart';
+import '../../../core/constants/app_constants.dart';
 import '../../../core/extensions/context_extensions.dart';
 import '../../../core/utils/app_utils.dart';
 import '../../blocs/subscription/subscription_bloc.dart';
@@ -27,38 +28,53 @@ class AnalyticsScreen extends StatelessWidget {
               final subscriptions = state is SubscriptionLoaded
                   ? state.allSubscriptions
                   : <Subscription>[];
+
               if (subscriptions.isEmpty) {
-                return const Center(
-                    child: Text('Добавьте подписки для анализа',
-                        style: TextStyle(color: AppTheme.textSecondary)));
+                return Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(Icons.analytics_outlined,
+                          size: 64,
+                          color: context.colors.primary.withValues(alpha: 0.2)),
+                      const SizedBox(height: 16),
+                      const Text('Добавьте подписки для анализа',
+                          style: TextStyle(color: AppTheme.textSecondary)),
+                    ],
+                  ),
+                );
               }
 
               final totalMonthly =
                   state is SubscriptionLoaded ? state.totalMonthlySpend : 0.0;
               final totalYearly = totalMonthly * 12;
 
-              // Для демонстрации сравнения представим, что в прошлом месяце траты были другими.
-              // В реальном приложении здесь должен быть запрос к истории транзакций.
-              const prevMonthSpend = 15000.0; // Заглушка для сравнения
+              // В реальном приложении здесь должен быть расчет на основе истории, пока используем заглушку
+              const prevMonthSpend = 12000.0;
               final diff = totalMonthly - prevMonthSpend;
-              final diffPercent = (diff / prevMonthSpend * 100).abs();
+              final diffPercent = prevMonthSpend > 0
+                  ? (diff / prevMonthSpend * 100).abs()
+                  : 0.0;
 
               final categoryData = _calculateCategoryData(subscriptions);
-              final maxCategory = categoryData.entries
-                  .reduce((a, b) => a.value > b.value ? a : b)
-                  .key;
+
+              // Находим самую затратную категорию для инсайта
+              final maxCategoryEntry = categoryData.entries.isNotEmpty
+                  ? categoryData.entries
+                      .reduce((a, b) => a.value > b.value ? a : b)
+                  : null;
 
               return SingleChildScrollView(
                 padding: const EdgeInsets.all(24.0),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // --- Сравнение с прошлым месяцем (Новое) ---
+                    // --- Сводка ---
                     Row(
                       children: [
                         _buildSummaryCard(
                             context,
-                            'Всего в месяц',
+                            'Ежемесячно',
                             AppUtils.formatCurrency(totalMonthly),
                             diff >= 0 ? Icons.trending_up : Icons.trending_down,
                             diff >= 0 ? Colors.redAccent : Colors.greenAccent,
@@ -67,22 +83,22 @@ class AnalyticsScreen extends StatelessWidget {
                     ),
                     const SizedBox(height: 24),
 
-                    // --- Блок прогнозов ---
+                    // --- Прогноз ---
                     Container(
                       padding: const EdgeInsets.all(24),
                       decoration: BoxDecoration(
                         color: AppTheme.surfaceColor,
-                        borderRadius: BorderRadius.circular(32),
+                        borderRadius: BorderRadius.circular(28),
                         border: Border.all(
                             color: Colors.white.withValues(alpha: 0.05)),
                       ),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text('Прогноз', style: context.titleMedium),
+                          Text('Прогноз расходов', style: context.titleMedium),
                           const SizedBox(height: 16),
-                          _buildForecastRow(
-                              'В месяц', AppUtils.formatCurrency(totalMonthly)),
+                          _buildForecastRow('За полгода',
+                              AppUtils.formatCurrency(totalMonthly * 6)),
                           const Divider(color: Colors.white10, height: 24),
                           _buildForecastRow(
                               'За год', AppUtils.formatCurrency(totalYearly),
@@ -92,32 +108,38 @@ class AnalyticsScreen extends StatelessWidget {
                     ),
                     const SizedBox(height: 32),
 
-                    Text('Инсайты', style: context.titleMedium),
-                    const SizedBox(height: 12),
-                    _buildInsightCard(context, maxCategory),
+                    if (maxCategoryEntry != null) ...[
+                      Text('Инсайты', style: context.titleMedium),
+                      const SizedBox(height: 12),
+                      _buildInsightCard(context, maxCategoryEntry.key),
+                      const SizedBox(height: 32),
+                    ],
 
-                    const SizedBox(height: 32),
-                    Text('Траты по категориям', style: context.titleMedium),
+                    Text('По категориям', style: context.titleMedium),
                     const SizedBox(height: 24),
 
                     // График
                     SizedBox(
-                      height: 180,
+                      height: 200,
                       child: PieChart(
                         PieChartData(
-                          sectionsSpace: 2,
-                          centerSpaceRadius: 35,
+                          sectionsSpace: 4,
+                          centerSpaceRadius: 40,
                           sections: categoryData.entries.map((entry) {
+                            final percentage = totalMonthly > 0
+                                ? (entry.value / totalMonthly * 100)
+                                : 0;
                             return PieChartSectionData(
                               color: _getCategoryColor(entry.key),
                               value: entry.value,
-                              title:
-                                  '${((entry.value / totalMonthly) * 100).toStringAsFixed(0)}%',
-                              radius: 45,
+                              title: percentage > 5
+                                  ? '${percentage.toStringAsFixed(0)}%'
+                                  : '',
+                              radius: 50,
                               titleStyle: const TextStyle(
                                   color: Colors.white,
                                   fontWeight: FontWeight.bold,
-                                  fontSize: 11),
+                                  fontSize: 12),
                             );
                           }).toList(),
                         ),
@@ -159,19 +181,19 @@ class AnalyticsScreen extends StatelessWidget {
                 Text(title,
                     style: const TextStyle(
                         color: AppTheme.textSecondary, fontSize: 14)),
-                Icon(icon, color: color, size: 20),
+                Icon(icon, color: color, size: 22),
               ],
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: 12),
             Text(value,
                 style: const TextStyle(
                     color: AppTheme.textPrimary,
-                    fontSize: 28,
+                    fontSize: 32,
                     fontWeight: FontWeight.bold)),
             const SizedBox(height: 8),
             Text(subtitle,
                 style: TextStyle(
-                    color: color, fontSize: 12, fontWeight: FontWeight.w500)),
+                    color: color, fontSize: 12, fontWeight: FontWeight.w600)),
           ],
         ),
       ),
@@ -182,21 +204,23 @@ class AnalyticsScreen extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: Colors.blueAccent.withValues(alpha: 0.1),
+        color: context.colors.primary.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: Colors.blueAccent.withValues(alpha: 0.2)),
+        border:
+            Border.all(color: context.colors.primary.withValues(alpha: 0.2)),
       ),
       child: Row(
         children: [
-          const CircleAvatar(
-            backgroundColor: Colors.blueAccent,
-            child: Icon(Icons.auto_awesome, color: Colors.white, size: 20),
+          CircleAvatar(
+            backgroundColor: context.colors.primary,
+            child:
+                const Icon(Icons.auto_awesome, color: Colors.white, size: 20),
           ),
           const SizedBox(width: 16),
           Expanded(
             child: Text(
-              'Вы активный потребитель в категории "$category". Проверьте, не дублируют ли подписки друг друга?',
-              style: context.bodyMedium?.copyWith(fontSize: 13),
+              'Больше всего вы тратите в категории "$category". Может быть, пора пересмотреть активные подписки?',
+              style: context.bodyMedium?.copyWith(fontSize: 13, height: 1.4),
             ),
           ),
         ],
@@ -229,20 +253,20 @@ class AnalyticsScreen extends StatelessWidget {
   }
 
   Color _getCategoryColor(String category) {
-    switch (category) {
-      case 'Развлечения':
-        return Colors.blueAccent;
-      case 'Музыка':
-        return Colors.greenAccent;
-      case 'Видео':
-        return Colors.redAccent;
-      case 'Работа':
-        return Colors.purpleAccent;
-      case 'Здоровье':
-        return Colors.orangeAccent;
-      default:
-        return Colors.grey;
-    }
+    final index = AppConstants.categories.indexOf(category);
+    if (index == -1) return Colors.grey;
+
+    // Генерация цветов на основе списка категорий
+    final colors = [
+      Colors.blueAccent,
+      Colors.greenAccent,
+      Colors.redAccent,
+      Colors.purpleAccent,
+      Colors.orangeAccent,
+      Colors.tealAccent,
+      Colors.pinkAccent,
+    ];
+    return colors[index % colors.length];
   }
 
   Widget _buildCategoryItem(

@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'package:drift/drift.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../core/constants/app_constants.dart';
 import '../database/app_database.dart';
@@ -71,7 +70,7 @@ class AuthRepositoryImpl implements AuthRepository {
       }
 
       // Создание пользователя
-      final id = await _db.into(_db.userTable).insert(
+      await _db.into(_db.userTable).insert(
             UserTableCompanion.insert(
               email: email,
               password: password,
