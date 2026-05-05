@@ -59,28 +59,24 @@ class AuthRepositoryImpl implements AuthRepository {
 
   @override
   Future<UserEntity?> register(String email, String password) async {
-    try {
-      // Проверка, существует ли уже такой email
-      final existingQuery = _db.select(_db.userTable)
-        ..where((t) => t.email.equals(email));
-      final exists = await existingQuery.getSingleOrNull();
+    // Проверка, существует ли уже такой email
+    final existingQuery = _db.select(_db.userTable)
+      ..where((t) => t.email.equals(email));
+    final exists = await existingQuery.getSingleOrNull();
 
-      if (exists != null) {
-        throw Exception('Этот Email уже занят');
-      }
-
-      // Создание пользователя
-      await _db.into(_db.userTable).insert(
-            UserTableCompanion.insert(
-              email: email,
-              password: password,
-            ),
-          );
-
-      return login(email, password);
-    } catch (e) {
-      rethrow;
+    if (exists != null) {
+      throw Exception('Этот Email уже занят');
     }
+
+    // Создание пользователя
+    await _db.into(_db.userTable).insert(
+          UserTableCompanion.insert(
+            email: email,
+            password: password,
+          ),
+        );
+
+    return login(email, password);
   }
 
   @override
@@ -88,5 +84,10 @@ class AuthRepositoryImpl implements AuthRepository {
     await _prefs.remove(SessionKeys.isLoggedIn);
     await _prefs.remove(SessionKeys.currentUserEmail);
     _controller.add(null);
+  }
+
+  /// Освобождаем ресурсы StreamController при уничтожении репозитория
+  Future<void> dispose() async {
+    await _controller.close();
   }
 }

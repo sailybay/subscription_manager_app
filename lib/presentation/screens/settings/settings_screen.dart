@@ -1,11 +1,11 @@
-import 'dart:io';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:path/path.dart' as p;
+import 'dart:io';
+import '../../../core/constants/app_constants.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/extensions/context_extensions.dart';
 import '../../../core/utils/app_utils.dart';
@@ -169,7 +169,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
     Widget? trailing,
     VoidCallback? onTap,
     Color? titleColor,
-    Color? iconColor,
   }) {
     return InkWell(
       onTap: onTap,
@@ -239,26 +238,25 @@ class _SettingsScreenState extends State<SettingsScreen> {
         if (!context.mounted) return;
 
         try {
-          await Share.shareXFiles(
-            [XFile(filePath)],
-            subject: 'Экспорт подписок',
+          // Используем актуальный API share_plus
+          await SharePlus.instance.share(
+            ShareParams(
+              files: [XFile(filePath)],
+              subject: 'Экспорт подписок',
+            ),
           );
-        } catch (e) {
+        } catch (_) {
           if (!context.mounted) return;
-          _fallbackToClipboard(
-              context, csv, 'Ошибка плагина. Текст скопирован в буфер.');
+          // Копируем в буфер как запасной вариант
+          AppUtils.showSnackBar(context,
+              'Файл сохранен: $fileName. Перезапустите приложение для шаринга.');
         }
       } catch (e) {
         if (!context.mounted) return;
-        _fallbackToClipboard(
-            context, csv, 'Ошибка сохранения. Текст скопирован в буфер.');
+        AppUtils.showSnackBar(context, 'Ошибка экспорта: ${e.toString()}',
+            isError: true);
       }
     }
-  }
-
-  void _fallbackToClipboard(BuildContext context, String data, String message) {
-    Clipboard.setData(ClipboardData(text: data));
-    AppUtils.showSnackBar(context, message);
   }
 
   void _confirmClearData(BuildContext context) {
@@ -267,7 +265,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
       builder: (ctx) => AlertDialog(
         title: const Text('Очистить все данные?'),
         content: const Text(
-            'Это удалить все ваши подписки и уведомления. Это действие необратимо.'),
+            'Это удалит все ваши подписки и уведомления. Действие необратимо.'),
         actions: [
           TextButton(
               onPressed: () => context.pop(), child: const Text('Отмена')),

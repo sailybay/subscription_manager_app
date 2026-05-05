@@ -40,8 +40,8 @@ class _SplashScreenState extends State<SplashScreen>
   Widget build(BuildContext context) {
     return BlocListener<AuthBloc, AuthState>(
       listener: (context, state) {
-        // Ждем небольшую паузу, чтобы анимация лого успела проиграться
         Future.delayed(const Duration(milliseconds: 2500), () {
+          if (!context.mounted) return;
           if (state is Authenticated) {
             context.go(AppRoutes.home);
           } else if (state is Unauthenticated) {

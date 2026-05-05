@@ -61,7 +61,14 @@ class _AddSubscriptionScreenState extends State<AddSubscriptionScreen> {
         ],
       ),
       body: Container(
-        decoration: const BoxDecoration(gradient: AppTheme.backgroundGradient),
+        decoration: BoxDecoration(
+          gradient: Theme.of(context).brightness == Brightness.dark
+              ? AppTheme.backgroundGradient
+              : null,
+          color: Theme.of(context).brightness == Brightness.light
+              ? AppTheme.backgroundLight
+              : null,
+        ),
         child: SafeArea(
           child: SingleChildScrollView(
             padding: const EdgeInsets.all(24.0),
@@ -142,7 +149,7 @@ class _AddSubscriptionScreenState extends State<AddSubscriptionScreen> {
                     decoration: BoxDecoration(
                       color: AppTheme.surfaceColor,
                       borderRadius: BorderRadius.circular(16),
-                      border: Border.all(color: const Color(0xFF2A2A40)),
+                      border: Border.all(color: Theme.of(context).dividerColor),
                     ),
                     child: Row(
                       children: [

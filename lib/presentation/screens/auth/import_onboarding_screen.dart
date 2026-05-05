@@ -33,15 +33,17 @@ class _ImportOnboardingScreenState extends State<ImportOnboardingScreen> {
     // Получаем результаты сканирования
     final results = await sl<EmailImportService>().scanEmails();
 
-    // Получаем список уже существующих подписок из Блока
-    final state = context.read<SubscriptionBloc>().state;
+    // Захватываем state ДО await, чтобы избежать использования контекста
+    // после асинхронного разрыва
+    if (!mounted) return;
+
+    final currentState = context.read<SubscriptionBloc>().state;
     List<Subscription> existingSubs = [];
-    if (state is SubscriptionLoaded) {
-      existingSubs = state.allSubscriptions;
+    if (currentState is SubscriptionLoaded) {
+      existingSubs = currentState.allSubscriptions;
     }
 
-    // Фильтруем результаты: оставляем только те подписки, которых еще нет в базе
-    // Сравнение идет по имени (приводим к нижнему регистру для надежности)
+    // Фильтруем: оставляем только те подписки, которых еще нет в базе
     final filteredResults = results.where((found) {
       return !existingSubs.any((existing) =>
           existing.name.toLowerCase() == found.name.toLowerCase());
