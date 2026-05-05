@@ -9,6 +9,7 @@ import '../../../data/services/email_import_service.dart';
 import '../../../domain/entities/subscription.dart';
 import '../../blocs/subscription/subscription_bloc.dart';
 import '../../blocs/subscription/subscription_event.dart';
+import '../../blocs/subscription/subscription_state.dart';
 import '../../widgets/common/app_button.dart';
 import '../../widgets/subscription_card.dart';
 
@@ -29,12 +30,27 @@ class _ImportOnboardingScreenState extends State<ImportOnboardingScreen> {
       _isScanning = true;
     });
 
+    // Получаем результаты сканирования
     final results = await sl<EmailImportService>().scanEmails();
+
+    // Получаем список уже существующих подписок из Блока
+    final state = context.read<SubscriptionBloc>().state;
+    List<Subscription> existingSubs = [];
+    if (state is SubscriptionLoaded) {
+      existingSubs = state.allSubscriptions;
+    }
+
+    // Фильтруем результаты: оставляем только те подписки, которых еще нет в базе
+    // Сравнение идет по имени (приводим к нижнему регистру для надежности)
+    final filteredResults = results.where((found) {
+      return !existingSubs.any((existing) =>
+          existing.name.toLowerCase() == found.name.toLowerCase());
+    }).toList();
 
     setState(() {
       _isScanning = false;
-      _foundSubscriptions = results;
-      _selectedIds.addAll(results.map((e) => e.id));
+      _foundSubscriptions = filteredResults;
+      _selectedIds.addAll(filteredResults.map((e) => e.id));
     });
   }
 
@@ -151,6 +167,33 @@ class _ImportOnboardingScreenState extends State<ImportOnboardingScreen> {
   }
 
   Widget _buildResultsState() {
+    if (_foundSubscriptions!.isEmpty) {
+      return Column(
+        key: const ValueKey('no_results'),
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          const Icon(Icons.check_circle_outline,
+              size: 80, color: Colors.greenAccent),
+          const SizedBox(height: 24),
+          Text(
+            'Всё уже под контролем!',
+            style: context.titleLarge,
+          ),
+          const SizedBox(height: 12),
+          const Text(
+            'Я не нашел новых подписок в вашей почте. Все найденные сервисы уже есть в вашем списке.',
+            textAlign: TextAlign.center,
+            style: TextStyle(color: AppTheme.textSecondary),
+          ),
+          const SizedBox(height: 48),
+          AppButton(
+            text: 'На главный экран',
+            onPressed: () => context.go(AppRoutes.home),
+          ),
+        ],
+      );
+    }
+
     return Column(
       key: const ValueKey('results'),
       children: [
@@ -160,7 +203,7 @@ class _ImportOnboardingScreenState extends State<ImportOnboardingScreen> {
         ),
         const SizedBox(height: 8),
         Text(
-          'Я нашел ${_foundSubscriptions!.length} подписки. Выберите те, которые хотите добавить:',
+          'Я нашел ${_foundSubscriptions!.length} новые подписки. Выберите те, которые хотите добавить:',
           textAlign: TextAlign.center,
           style:
               TextStyle(color: context.colors.onSurface.withValues(alpha: 0.7)),

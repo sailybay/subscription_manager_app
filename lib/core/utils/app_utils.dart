@@ -60,13 +60,27 @@ class AppUtils {
   static String generateSubscriptionCsv(List<dynamic> subs) {
     if (subs.isEmpty) return '';
     final buffer = StringBuffer();
-    // Заголовки
-    buffer.writeln('ID,Name,Price,Category,NextBillingDate');
+
+    // Заголовки (с меткой BOM для корректного открытия в Excel)
+    buffer.write('\uFEFF'); // UTF-8 BOM
+    buffer.writeln('Название;Цена;Категория;Дата следующего платежа');
+
     // Данные
     for (var sub in subs) {
-      buffer.writeln(
-          '${sub.id},${sub.name},${sub.price},${sub.category},${sub.nextBillingDate}');
+      final name = _escapeCsvField(sub.name);
+      final price = sub.price.toString();
+      final category = _escapeCsvField(sub.category);
+      final date = formatDate(sub.nextBillingDate);
+
+      buffer.writeln('$name;$price;$category;$date');
     }
     return buffer.toString();
+  }
+
+  static String _escapeCsvField(String field) {
+    if (field.contains(';') || field.contains('"') || field.contains('\n')) {
+      return '"${field.replaceAll('"', '""')}"';
+    }
+    return field;
   }
 }
