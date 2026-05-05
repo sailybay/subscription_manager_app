@@ -7,6 +7,7 @@ import '../../presentation/blocs/auth/auth_bloc.dart';
 import '../../presentation/blocs/auth/auth_state.dart';
 import '../../presentation/screens/auth/login_screen.dart';
 import '../../presentation/screens/auth/register_screen.dart';
+import '../../presentation/screens/auth/import_onboarding_screen.dart';
 import '../../presentation/screens/home/home_screen.dart';
 import '../../presentation/screens/subscription/add_subscription_screen.dart';
 import '../../presentation/screens/analytics/analytics_screen.dart';
@@ -37,7 +38,8 @@ class AppRouter {
       }
 
       if (isLoggingIn) {
-        return AppRoutes.home;
+        // После логина/регистрации отправляем на онбординг импорта
+        return AppRoutes.importOnboarding;
       }
 
       return null;
@@ -54,6 +56,10 @@ class AppRouter {
       GoRoute(
         path: AppRoutes.register,
         builder: (context, state) => const RegisterScreen(),
+      ),
+      GoRoute(
+        path: AppRoutes.importOnboarding,
+        builder: (context, state) => const ImportOnboardingScreen(),
       ),
       GoRoute(
         path: AppRoutes.home,

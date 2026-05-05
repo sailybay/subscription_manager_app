@@ -17,6 +17,7 @@ class AppRoutes {
   static const String analytics = '/analytics';
   static const String settings = '/settings';
   static const String categories = '/categories';
+  static const String importOnboarding = '/import-onboarding';
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
