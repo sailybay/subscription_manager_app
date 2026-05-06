@@ -5,8 +5,14 @@
 ---
 
 ## 📸 Скриншоты
-
-<!-- Вставьте скриншоты сюда -->
+<p align="center">
+<img width="1280" height="2856" alt="Screenshot_1778091105" src="https://github.com/user-attachments/assets/b3d8060f-39c9-43b3-91b4-5bf0ad34ccdb" />
+<img width="1280" height="2856" alt="Screenshot_1778091096" src="https://github.com/user-attachments/assets/b1de66f7-ff80-4b3f-86b1-9a2be852e4b8" />
+<img width="1280" height="2856" alt="Screenshot_1778091108" src="https://github.com/user-attachments/assets/75317f21-b6ce-4a59-9b78-bc9d1a585add" />
+<img width="1280" height="2856" alt="Screenshot_1778091115" src="https://github.com/user-attachments/assets/b6dda6d4-b7c9-443b-b788-0cbb0a58ccdb" />
+<img width="1280" height="2856" alt="Screenshot_1778091126" src="https://github.com/user-attachments/assets/e4377979-bd5f-46a8-9f39-5a53f8465489" />
+<img width="1280" height="2856" alt="Screenshot_1778091933" src="https://github.com/user-attachments/assets/1802322f-2194-41af-93ba-d11bb770e626" />
+</p>
 |
 
 ---
@@ -127,7 +133,8 @@ lib/
 
 ## 👤 Автор
 
-**Ваше Имя**
+Bakdaulet Sailybay<img width="1280" height="2856" alt="Screenshot_1778091096" src="https://github.com/user-attachments/assets/8e094bfa-6372-4a94-a150-86f4c7fe4057" />
+
 - GitHub: [@sailybay](https://github.com/sailybay)
 
 ---
